@@ -205,11 +205,13 @@ static bool __stdcall SaveScreenShot(const char* fileName) {
 							screen->GetPixel(left + x, top + y, r, g, b);
 							unsigned char logoR, logoG, logoB, logoA;
 							logo->GetPixel(x, y, logoR, logoG, logoB, logoA);
+							int alpha = logoA;
+							int invAlpha = 255 - alpha;
 
 							screen->SetPixel(left + x, top + y,
-								(logoR * logoA + r * (255 - logoA)) / 255,
-								(logoG * logoA + g * (255 - logoA)) / 255,
-								(logoB * logoA + b * (255 - logoA)) / 255,
+								(logoR * alpha + r * invAlpha) / 255,
+								(logoG * alpha + g * invAlpha) / 255,
+								(logoB * alpha + b * invAlpha) / 255,
 								0xFF);
 						}
 					}

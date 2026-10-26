@@ -13,9 +13,13 @@
 #include <stdlib.h>
 #include <windows.h>
 #if !defined(_MSC_VER)
+#ifdef __MINGW32__
+#include <malloc.h>
+#else
 // The port's <malloc.h> has no _alloca yet.
 #include <alloca.h>
 #define _alloca alloca
+#endif
 #endif
 
 // lib: 0x42a6d0 (RFBrush's scalar deleting destructor), 0x42a750

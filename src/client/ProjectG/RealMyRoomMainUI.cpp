@@ -986,7 +986,7 @@ void CRealMyRoomMain::ShowPet(unsigned long typeId) {
 				parts.SetTid(uccTypeId, info ? info->m_serial : 0, uccKey, info ? info->m_uccSeq : 0);
 				loaded = pet->SetModel(parts, WSingleton<CSharedDoc>::Instance()->GetMyAuxPartTidList(), NULL, 3.0f, 0);
 			} else {
-				CSharedDoc* doc = WSingleton<CSharedDoc>::Instance(); loaded = pet->SetModel(doc->GetMyPartTidList(), doc->GetMyAuxPartTidList(), NULL, 3.0f, 0);
+				loaded = pet->SetModel(WSingleton<CSharedDoc>::Instance()->GetMyPartTidList(), WSingleton<CSharedDoc>::Instance()->GetMyAuxPartTidList(), NULL, 3.0f, 0);
 			}
 			break;
 

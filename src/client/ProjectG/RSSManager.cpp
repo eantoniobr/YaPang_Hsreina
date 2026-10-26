@@ -198,18 +198,23 @@ const char *RSSManager::LoadFirstId(const char *fileName)
 	TiXmlDocument doc;
 	if (doc.LoadFile(fileName)) {
 		TiXmlNode *pRss = doc.FirstChild("rss");
-		if (pRss) {
-			TiXmlNode *pNode = pRss->FirstChild("notice");
-			if (pNode)
-				pNode = pNode->FirstChild();
 
-			if (pNode == 0)
-				return 0;
+		if (pRss == 0)
+			return 0;
 
-			const char *id = pNode->Value();
+		TiXmlNode *pNode = pRss->FirstChild("notice");
 
-			return id;
-		}
+		if (pNode == 0)
+			return 0;
+
+		pNode = pNode->FirstChild();
+
+		if (pNode == 0)
+			return 0;
+
+		const char *id = pNode->Value();
+
+		return id;
 	}
 
 	return 0;

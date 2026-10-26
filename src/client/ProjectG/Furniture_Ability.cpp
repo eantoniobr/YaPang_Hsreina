@@ -157,9 +157,8 @@ void CFurniture_AbilityDlg::OnFurnitureAbility_ItemListOwnerDraw(intptr_t param)
 	WRect rcLine;
 	GetClientRect(rc);
 	for (int row = 0; row < 2; row++) {
-		float y = row * 110.0f + 87.0f;
 		for (int col = 0; col < 3; col++) {
-			rcLine = WRect(col * 92.0f + rc.x + 126.0f, y + rc.y, m_pLine->Width(), m_pLine->Height());
+			rcLine = WRect(col * 92.0f + rc.x + 126.0f, row * 110.0f + 87.0f + rc.y, m_pLine->Width(), m_pLine->Height());
 
 			pGDI->DrawTexture(m_pLine, rcLine, 0xFFFFFFFF, 0);
 		}

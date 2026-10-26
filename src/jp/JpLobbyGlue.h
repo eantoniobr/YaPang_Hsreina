@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 
+#include <windows.h>
+
 #include "padding.h"
 
 class CLobbyMain;
@@ -352,7 +354,7 @@ const std::list<sRoomInfo>& JpSharedDoc_GetRoomList(void);
 // JP +0x109d8 = room +0xd4: the KR m_userMap (room +0xb4), the lobby's
 // players by UID (JP 0x520340 walks it as a std::map, its 0xc8-byte pair
 // values copied from node +0x10; KR FrUserListDlg lists m_userMap).
-const std::map<uint32_t, sBriefUserInfo>& JpSharedDoc_GetLobbyUserMap(void);
+const std::map<DWORD, sBriefUserInfo>& JpSharedDoc_GetLobbyUserMap(void);
 // 0x502f80 (fastcall, name ours): `identity == -1` takes the local
 // player's (JP CSharedDoc +0x812 = the KR m_userInfo.identity), then
 // (identity & 4) == 4: the KR AdminMode (shareddoc.inl) with an argument.

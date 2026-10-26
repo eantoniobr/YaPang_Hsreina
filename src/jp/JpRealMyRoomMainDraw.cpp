@@ -15,6 +15,7 @@
 #include <map>
 
 #include "JpMasterySlot.h"
+#include "JpLobbyPlayer.h"
 #include "RFLobbyDesktop.h"
 #include "ItemManager.h"
 #include "MascotInfo.h"
@@ -28,6 +29,9 @@
 #include "bitmap.h"
 #include "commonutil.h"
 #include "exhibition.h"
+#include "partsinfo.h"
+#include "wbone.h"
+#include "wpuppet.h"
 #include "RankingDlg.h"
 #include "user_info.h"
 #include "fredit.h"
@@ -624,13 +628,14 @@ void JpRealMyRoomMain::OnPetOwnerDraw(intptr_t param) {
 
 // Port body (JP 0x61f8b0, the KR SelectItemList(FrListItem*); jump table
 // 0x6206a8 over 0x6206e4): only the parts case (JP index 0, sub tabs 2-4,
-// 0x16 ...: the KR case 1-3 / 26) in the lobby (RFLobbyDesktop::s_mode 0),
-// where the JP hands the part to the "LobbyAvatar" actor (0x18a: the part
-// list, &type id, &item id, &result, &true). Left out: the rental
+// 0x16 ...: the KR case 1-3 / 26): in the lobby (RFLobbyDesktop::s_mode 0)
+// the JP hands the part to the "LobbyAvatar" actor (0x18a: the part list,
+// &type id, &item id, &result, &true), in the lounge it sets it on the
+// preview's pet frame; either result puts the list in the shared doc's
+// character (sent by Net_EquipDresserParts). Left out: the rental
 // extension dialog (FrRentalExtensionDlg), the level / angel wing /
 // restriction notices (main actor 0x23), the card / aux part case
-// (0x70000000 type ids, "LobbyAvatar" 0x18b), the lounge preview's
-// SetPart (0x8b28b0 on +0x584), ShowMainModel 0x61a810 and the other sub
+// (0x70000000 type ids, "LobbyAvatar" 0x18b), ShowMainModel 0x61a810 and the other sub
 // tabs' cases (0x17 and the unlisted ones only return true); the caddie
 // (0xb) and mascot (0xd) rows go to ChangeCaddie / ChangeMascot.
 bool JpRealMyRoomMain::SelectItemList(FrListItem* pItem) {
@@ -692,23 +697,25 @@ bool JpRealMyRoomMain::SelectItemList(FrListItem* pItem) {
 			}
 		}
 
-		int result = 0;
-		if (RFLobbyDesktop::s_mode == 0) {
-			uint32_t typeId = (uint32_t)pInfo->m_typeId;
-			uint32_t serial = (uint32_t)pInfo->m_serial;
-			bool flag = true;
-			IActor* avatar = AfxGetTask()->GetActor("LobbyAvatar");
-			if (avatar != NULL) {
-				avatar << MsgObject(0, 0x18a, (intptr_t)&partList, (intptr_t)&typeId, (intptr_t)&serial, (intptr_t)&result, (intptr_t)&flag);
+		int result = SetItemPart(partList, pInfo, true);
+		if (RFLobbyDesktop::s_mode != 0 && m_petExhibition != NULL && m_petExhibition->GetPetFrame() != NULL) {
+			// JP 0x61ffe6: then (whatever the result) the character's bone is
+			// made visible (0x8acc60 GetBonePet, +0x6c the root bone, FindBone
+			// 0xb96880 of 0x4cef20's name for the frame's character tid,
+			// SetInvisible(false, true) 0xb97830).
+			CPetFrame* frame = m_petExhibition->GetPetFrame();
+			WPuppet* pet = frame->GetBonePet();
+			WBone* root = pet != NULL ? pet->GetRootBone() : NULL;
+			if (root != NULL) {
+				WBone* bone = root->FindBone(Jp_CharacterBoneName(frame->GetTidChar() & 0x3FFFFFF), 0);
+				if (bone != NULL) {
+					bone->SetInvisible(false, true);
+				}
 			}
 		}
 
 		if (result != 0) {
-			sCharacterInfo& charInfo = WSingleton<CSharedDoc>::Instance()->m_characterMap[WSingleton<CSharedDoc>::Instance()->m_myCharacterId];
-			for (int i = 0; i < partList.m_numTotalParts; i++) {
-				charInfo.partTypeIds[i] = partList.m_partTids[i];
-				charInfo.partIds[i] = partList.m_partIds[i];
-			}
+			StoreItemParts(partList);
 		}
 
 		m_pCharParts = partList.m_partTids;
@@ -742,12 +749,116 @@ bool JpRealMyRoomMain::SelectItemList(FrListItem* pItem) {
 	return true;
 }
 
+// Port only (JpRealMyRoomMain.h): JP 0x61ff0f (SelectItemList) and 0x61e138
+// (UnselectItemList): in the lobby (RFLobbyDesktop::s_mode 0) the
+// "LobbyAvatar" actor's 0x18a (the part list, &type id, &item id, &result,
+// &keepTid); in the avatar chat, where there is none, the preview's frame
+// (SetPart 0x8b28b0 on the exhibition's +0xa8, keepTid true).
+int JpRealMyRoomMain::SetItemPart(CPartTidList& partList, const sItemInfo* pInfo, bool keepTid) {
+	int result = 0;
+	uint32_t typeId = (uint32_t)pInfo->m_typeId;
+	uint32_t serial = (uint32_t)pInfo->m_serial;
+	if (RFLobbyDesktop::s_mode == 0) {
+		bool flag = keepTid;
+		IActor* avatar = AfxGetTask()->GetActor("LobbyAvatar");
+		if (avatar != NULL) {
+			avatar << MsgObject(0, 0x18a, (intptr_t)&partList, (intptr_t)&typeId, (intptr_t)&serial, (intptr_t)&result, (intptr_t)&flag);
+		}
+	} else if (m_petExhibition != NULL && m_petExhibition->GetPetFrame() != NULL) {
+		result = (int)Jp_PetFrame_SetPart(m_petExhibition->GetPetFrame(), &partList, typeId, serial, true);
+	}
+	return result;
+}
+
+// Port only (JpRealMyRoomMain.h): JP 0x620040 / 0x61e1ea: the shared doc's
+// equipped character (+0x3704 map, +0xa2a id) takes the list's parts (its
+// m_numTotalParts slots), and the page shows them (+0x490).
+void JpRealMyRoomMain::StoreItemParts(const CPartTidList& partList) {
+	sCharacterInfo& charInfo = WSingleton<CSharedDoc>::Instance()->m_characterMap[WSingleton<CSharedDoc>::Instance()->m_myCharacterId];
+	for (int i = 0; i < partList.m_numTotalParts; i++) {
+		charInfo.partTypeIds[i] = partList.m_partTids[i];
+		charInfo.partIds[i] = partList.m_partIds[i];
+	}
+}
+
+// Port body (JP 0x61dfb0; jump table 0x61e410 over 0x61e430, sub tab - 2):
+// a row the click unselected. Its part (sub tabs 2-4, 0x1b; 5 and 0x16
+// when it is no card) comes off when it is worn: SetItemPart again (it
+// takes a worn part off; the lobby's avatar without keepTid), and on a
+// result the doc's character takes the list; a part that is not worn keeps
+// its row selected (FrListBox::SelectItem 0xbefc00). Then the rows of the
+// parts that came off with it (0x613520 for each part type id the list held
+// before and no longer does; not the 2 and 3 placeholders) are unselected.
+// A card (5, 0x16): its aux slot emptied ("LobbyAvatar" 0x18b, 0; in the
+// avatar chat the preview's aux part, 0x8acd40, left out). The caddie
+// (0xb) and the mascot (0xd): none (ChangeCaddie / ChangeMascot 0).
+// Left out: ShowMainModel 0x61a810, the item ids kept under local content
+// 0x58 (0x7e9580), the item storage's sub tabs (0xe-0x11, 0x1e: 0xb2d250,
+// the furniture / skin slots) and the ones that only return.
+void JpRealMyRoomMain::UnselectItemList(FrListItem* pItem) {
+	sItemInfo* pInfo = (sItemInfo*)pItem->pData;
+	switch (m_subTabIndex) {
+	case 0xb:
+		ChangeCaddie(0);
+		ShowItemModel();
+		return;
+	case 0xd:
+		ChangeMascot(0);
+		return;
+	case 5:
+	case 0x16:
+		if (pInfo != NULL && (pInfo->m_typeId & 0xFC000000) == 0x70000000 && m_pCharCards != NULL) {
+			uint32_t typeId = (uint32_t)pInfo->m_typeId;
+			m_pCharCards[(typeId >> 21) & 0x1F] = 0;
+			if (RFLobbyDesktop::s_mode == 0) {
+				IActor* avatar = AfxGetTask()->GetActor("LobbyAvatar");
+				if (avatar != NULL) {
+					avatar << MsgObject(0, 0x18b, (intptr_t)&typeId, 0, 0, 0, 0);
+				}
+			}
+			return;
+		}
+	// fall through: the parts
+	case 2:
+	case 3:
+	case 4:
+	case 0x1b: {
+		if (pInfo == NULL) {
+			return;
+		}
+		CPartTidList& partList = WSingleton<CSharedDoc>::Instance()->GetMyPartTidList();
+		unsigned long before[24];
+		memcpy(before, partList.m_partTids, sizeof(before));
+		if (!partList.IsEquipped(pInfo->m_typeId, pInfo->m_serial)) {
+			m_itemList->SelectItem(pItem, true);
+		} else if (SetItemPart(partList, pInfo, false) != 0) {
+			StoreItemParts(partList);
+			m_pCharParts = partList.m_partTids;
+		}
+		for (int i = 0; i < 24; i++) {
+			unsigned long tid = before[i];
+			if (tid == 0 || tid == pInfo->m_typeId || tid == partList.m_partTids[i] || tid == 2 || tid == 3) {
+				continue;
+			}
+			for (FrListBox::ITEM_LIST::iterator it = m_itemList->m_itemList.begin(); it != m_itemList->m_itemList.end(); ++it) {
+				sItemInfo* pOther = (sItemInfo*)(*it)->pData;
+				if (pOther != NULL && pOther->m_typeId == tid && (tid & 0xFC000000) == 0x08000000) {
+					m_itemList->UnselectItem(*it);
+					break;
+				}
+			}
+		}
+		return;
+	}
+	}
+}
+
 // Port body (JP 0x620e00, 2365 bytes; the KR OnItemListBtnDown): the row
 // under the cursor goes to SelectItemList when the click selected it.
 // Left out: the +0x588 job test, the item storage mode (+0xa84, local
 // content 0x70), the per-sub-tab cases (jump table 0x6222f8 over
-// 0x622318), the UCC draw / self-design dialogs of the parts rows, and
-// UnselectItemList 0x61dfb0 for a row the click unselected (not written).
+// 0x622318) and the UCC draw / self-design dialogs of the parts rows. A
+// row the click unselected goes to UnselectItemList.
 void JpRealMyRoomMain::OnItemListBtnDown(void) {
 	FrListItem* pItem = m_itemList->GetItemUnderCursor();
 	if (pItem == NULL) {
@@ -756,5 +867,7 @@ void JpRealMyRoomMain::OnItemListBtnDown(void) {
 
 	if (pItem->selected) {
 		SelectItemList(pItem);
+	} else {
+		UnselectItemList(pItem);
 	}
 }
