@@ -39,9 +39,7 @@ extern unsigned long g_CurrentTime;
 const char* GetCharsTillSpace(const char* pSrc, char* pDest); // commonutil.cpp
 
 #ifdef JP_PAKS
-// 0xb4eb80 (src/jp/RFTextManager.h, not on this unit's include
-// path in the port: it is not a PG_REFRESH_HOOK_SOURCES unit).
-const char* Jp_LookupText(const char* key);
+#include "RFTextManager.h"  // Jp_LookupText 0xb4eb80 (src/jp)
 #endif
 
 // The chat target labels ("to guild" ...) are compared as identifiers: the JP
@@ -82,6 +80,11 @@ CHECK_SIZE(sMotionText, 0x20);
 
 // The motion commands, 15 per motion type (no symbol).
 extern sMotionText data_00a9e9d8[][15];
+#ifdef JP_PAKS
+#include "JpMotionTable.h"  // the JP table GetMotionName reads (src/jp)
+// The same layout on every ABI (CHECK_SIZE is 32-bit only).
+typedef char check_jp_motion_text_size[sizeof(sJpMotionText) == sizeof(sMotionText) ? 1 : -1];
+#endif
 
 // A chat command word (CheckChatCommand).
 struct sChatCmd {
@@ -661,8 +664,16 @@ const char *ChatManager::GetMotionName(const char *text, unsigned long type) {
 	char command[64];
 
 	for (int pass = 0; pass < 9; pass++) {
+#ifdef JP_PAKS
+		// JP 0x9a3990: the JP table (src/jp/JpMotionTable.h), 15 character
+		// types of 19 motions with the words translated, laid out as
+		// sMotionText.
+		sMotionText *motions = (sMotionText *)g_jpMotionTable[type & 0x3FFFFFF];
+		for (int i = 0; i < JP_MOTION_COUNT; i++) {
+#else
 		sMotionText *motions = data_00a9e9d8[type & 0x3FFFFFF];
 		for (int i = 0; i < 14; i++) {
+#endif
 			sMotionText *motion = &motions[i];
 			if (motion == 0)
 				break;
