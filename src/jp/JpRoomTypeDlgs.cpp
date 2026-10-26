@@ -1214,10 +1214,10 @@ void FrMassTypeRoomDlg::OnInviteLBtnUp(void) {
 		FrGameRoomDlg::OnInviteLBtnUp();
 		return;
 	}
-	const std::map<uint32_t, sBriefUserInfo>& users = JpSharedDoc_GetLobbyUserMap();
+	const std::map<DWORD, sBriefUserInfo>& users = JpSharedDoc_GetLobbyUserMap();
 	std::map<uint32_t, unsigned int> guildUserCount;
 	bool found = false;
-	std::map<uint32_t, sBriefUserInfo>::const_iterator it;
+	std::map<DWORD, sBriefUserInfo>::const_iterator it;
 	for (it = users.begin(); it != users.end(); ++it) {
 		if (it->second.guildUID != 0 && doc->m_userInfo.guildUID != it->second.guildUID
 			&& !it->second.unknownBit && it->second.roomNumber == 0xFFFF) {

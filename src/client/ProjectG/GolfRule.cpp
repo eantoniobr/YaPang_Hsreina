@@ -12048,10 +12048,11 @@ void CGolfRule::_ImeReset(void) {
 // golfrule.cpp:16596
 void CGolfRule::ReplayBoxOpen(void) {
 	if (!m_replayBox) {
-		float x = 571.0f - (800.0f - g_view->GetWidth());
+		WPoint pt;
+		pt.x = 571.0f - (800.0f - g_view->GetWidth());
 
 		m_replayBox = CreateForm<FrReplayControlDlg>(g_pFresh->GetManager(), this, "replaycontroldlg", 0);
-		m_replayBox->Open((FRESH_RESULT_CALLBACK)&CGolfRule::OnReplayModeDlgResult, WPoint(x, 55.0f), 0x11);
+		m_replayBox->Open((FRESH_RESULT_CALLBACK)&CGolfRule::OnReplayModeDlgResult, WPoint(pt.x, 55.0f), 0x11);
 	} else {
 		m_replayBox->SetVisible(true);
 	}

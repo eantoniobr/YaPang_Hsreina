@@ -2265,8 +2265,7 @@ bool CTaskMain::OnResultSubEquipBar(int result, FrForm *) {
 			PANGYA_ITEM_GROUP itemGroup = (PANGYA_ITEM_GROUP)(typeId >> 26);
 			if (itemGroup == 5) {
 				// a ball: no item guid to equip
-				CSharedDoc::Instance()->m_myBallId = typeId;
-				m_subSelection = CSharedDoc::Instance()->m_myBallId;
+				m_subSelection = CSharedDoc::Instance()->m_myBallId = item->m_typeId;
 				m_subSelectionTab = 0;
 			} else {
 				m_subSelection = typeId;

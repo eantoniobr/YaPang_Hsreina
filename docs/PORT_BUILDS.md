@@ -19,6 +19,24 @@ Use the standard type; cl 13.10 gives the same code.
 | A library algorithm the original calls | `#include <numeric>` and `std::accumulate(...)` | a hand-written loop, or a body-less `namespace std` declaration | `FrTradeBuyDlg::OnOkBnUp` |
 | File streams | `#include <fstream>` | a guard macro around the code | `CGStarMode::SavePartsInfo*` |
 
+For the JP code (`src/jp`, `src/client/Refresh`), which the Windows build
+compiles with GCC on LLP64:
+
+| Construct | Write | Not | Example |
+|---|---|---|---|
+| A key or value of KR `unsigned long` data (CSharedDoc's maps, type ids) | `DWORD`, with `<windows.h>` included by the header that uses it | `uint32_t` (another type than `unsigned long` on Windows) or `unsigned long` (64-bit in the macOS port, where `src/jp` is not mirrored) | `JpSharedDoc_GetLobbyUserMap` in `JpLobbyGlue.h`, ProjectG-Offline's `ProjectG/refresh/game/JpLobbyGlue.cpp` |
+| `_alloca` outside MSVC | `<malloc.h>` under `__MINGW32__`, `<alloca.h>` elsewhere | `<alloca.h>` alone (MinGW has none) | `RFBrush.cpp`, `RFStringUtil.cpp` |
+
+A change to a `src/jp` declaration that the glue in ProjectG-Offline's
+`ProjectG/refresh/game` (and projectg's `port/refresh/game`) defines must be
+made in both glue copies too. `npm run build:jp` there warns when the two
+glue copies differ.
+
+Fixes that make the port build go into YaPang as commits. An edit left
+uncommitted in ProjectG-Offline's `YaPang/` checkout is lost at the next
+checkout or pull of the submodule. The MinGW fixes above were lost once
+that way, and the JP build broke.
+
 ## 2. Headers the 2003 kit lacks come from projectg's externs
 
 The original kit in projectg's `externs/vs-2003/Vc7/include` had no

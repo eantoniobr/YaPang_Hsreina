@@ -72,6 +72,7 @@
 
 class Bitmap;
 class CExhibition;
+class CPartTidList;
 class FrArea;
 class FrButton;
 class FrEdit;
@@ -84,6 +85,7 @@ class FrViewer;
 class FrWnd;
 class FrWndManager;
 class MsgObject;
+struct sItemInfo;
 
 // The JP CCardBook (new 0x94 in the constructor 0x61f1f0, ctor 0x7f6970,
 // vtable 0xd2ad08): the my-room card album. Its JP layout is not the KR
@@ -203,6 +205,16 @@ protected:
 	// 0x61f8b0 (KR name, from the JP's decorated name): wears the row's
 	// item (the parts case only, JpRealMyRoomMainDraw.cpp).
 	bool SelectItemList(FrListItem* pItem);                           // 0x61f8b0
+	// 0x61dfb0 (the KR UnselectItemList): takes the row's item off (the
+	// parts and cards cases, the caddie and the mascot).
+	void UnselectItemList(FrListItem* pItem);                         // 0x61dfb0
+	// Port only: the part step SelectItemList and UnselectItemList share
+	// (inline in both in the JP): the item's part set (or taken off: it is
+	// worn) on the lobby's avatar ("LobbyAvatar" 0x18a, keepTid) or, in the
+	// avatar chat, on the preview's frame (SetPart 0x8b28b0, keepTid true);
+	// the result. And the list put in the shared doc's equipped character.
+	int SetItemPart(CPartTidList& partList, const sItemInfo* pInfo, bool keepTid);
+	void StoreItemParts(const CPartTidList& partList);
 	void OnItemDescBgOwnerDraw(intptr_t param);                       // 0x6077c0 middle_ui.item_desc_bg
 	void OnItemSlotOwnerDraw(intptr_t param);                         // 0x60d0d0 middle_ui.sbox.item_slot
 	void OnItemHideDescBgOwnerDraw(intptr_t param);                   // 0x6093d0 item_hide_desc_bg
