@@ -569,9 +569,9 @@ BallSpeedFactor::BallSpeedFactor(unsigned long shotType, const CGolfBall &ball, 
 		float ratio = doc->GetBar().m_position - doc->GetBar().m_startPosition;
 
 		if (ratio > 0.0f)
-			ratio = ratio / (GolfClub().GetNarrowAccuracy() + 140.0f - doc->GetBar().m_startPosition);
+			ratio = ratio / (GolfClub().GetNarrowAccuracy() + BAR_START - doc->GetBar().m_startPosition);
 		else
-			ratio = ratio / (doc->GetBar().m_startPosition - (140.0f - GolfClub().GetNarrowAccuracy()));
+			ratio = ratio / (doc->GetBar().m_startPosition - (BAR_START - GolfClub().GetNarrowAccuracy()));
 
 		m_angle -= m_spin * 0.34906584f;
 
@@ -580,14 +580,14 @@ BallSpeedFactor::BallSpeedFactor(unsigned long shotType, const CGolfBall &ball, 
 	}
 
 	if (GOLFDOC()->GetBar().m_accuracyGrade == 2) {
-		float ratio = (Abs(GOLFDOC()->GetBar().m_position - 140.0f) - GolfClub().GetNarrowAccuracy()) / (GolfClub().GetWideAccuracy() - GolfClub().GetNarrowAccuracy());
+		float ratio = (Abs(GOLFDOC()->GetBar().m_position - BAR_START) - GolfClub().GetNarrowAccuracy()) / (GolfClub().GetWideAccuracy() - GolfClub().GetNarrowAccuracy());
 
 		if (!IsLocalContent((localContentType_t)0x50) || ball.m_powerFlags == 0) {
 			m_spin = 0.2f;
 			m_curve = 0.0f;
 		}
 
-		if (GOLFDOC()->GetBar().m_position > 140.0f) {
+		if (GOLFDOC()->GetBar().m_position > BAR_START) {
 			m_spin *= -1.0f;
 			m_angle -= ratio * 0.17453292f;
 		} else {
@@ -628,9 +628,10 @@ BallSpeedFactor::BallSpeedFactor(unsigned long shotType, const CGolfBall &ball, 
 		}
 	}
 
-	int grade = GOLFDOC()->GetBar().m_accuracyGrade;
+	CGolfDoc *gdoc = GOLFDOC();
+	int grade = gdoc->GetBar().m_accuracyGrade;
 	if (grade > 1) {
-		if (grade == 4 && GOLFDOC()->GetBar().m_stopped && GolfClub().PowerShotType() != 0 && !(ball.m_powerFlags & 0x70) && IsLocalContent((localContentType_t)0x2F) && PLAYER(GOLFDOC()->m_myPlayerIndex)->m_shotItemTypeId == 0x18000028)
+		if (grade == 4 && gdoc->GetBar().m_stopped && GolfClub().PowerShotType() != 0 && !(ball.m_powerFlags & 0x70) && IsLocalContent((localContentType_t)0x2F) && PLAYER(GOLFDOC()->m_myPlayerIndex)->m_shotItemTypeId == 0x18000028)
 			return;
 
 		// The base's up axis (CBase::HandleMsg 0x1C1 writes a whole WVector).

@@ -14,6 +14,8 @@
 #include "parttidlist.h"
 #include "FamilyMain.h"
 #include "mousecursor.h"
+#include <fstream>
+#include "commonutil.h"
 
 // The project's SDK has no <wininet.h>; the function and the two flags used
 // here are declared locally.
@@ -91,6 +93,92 @@ void CGStarMode::GetAllItemFromItemManager(void) {
 // g_starmode.cpp:344
 void ErrorMessageToMyRoom(void *param) {
 	CTaskManager::Instance()->PostMsg(NULL, "RealMyRoom", 0x23, (intptr_t)param, 0, 0, 0);
+}
+
+// g_starmode.cpp:352
+bool CGStarMode::SavePartsInfoCharacterMap(const std::map<unsigned int, sCharacterInfo> &characters, const char *fileName) {
+	std::fstream file(fileName, std::ios::out | std::ios::trunc);
+	if (file.is_open()) {
+		file << s_settingsHeader;
+		file.close();
+	}
+
+	for (std::map<unsigned int, sCharacterInfo>::const_iterator it = characters.begin(); it != characters.end(); ++it) {
+		if (!SavePartsInfoCharacter(it->second, fileName, false, ErrorMessageToMyRoom)) {
+			std::fstream errorFile(fileName, std::ios::out | std::ios::trunc);
+			if (errorFile.is_open()) {
+				errorFile << s_errorHeader;
+				errorFile.close();
+			}
+			return false;
+		}
+	}
+
+	return true;
+}
+
+// g_starmode.cpp:380
+bool CGStarMode::SavePartsInfoCharacter(const sCharacterInfo &character, const char *fileName, bool truncate, void (*onError)(void *)) {
+	std::ios::openmode mode = std::ios::app;
+	if (truncate) {
+		mode = std::ios::trunc;
+	}
+
+	std::fstream file(fileName, mode | std::ios::out);
+	if (!file.is_open()) {
+		return false;
+	}
+
+	// One line per character: "<type id>|<part>...|<part>#<name>\n", each
+	// worn part as its five decimal digits (a 0 for an empty slot).
+	char line[101];
+	IFF_STRUCT::sChar *charData = ItemManager()->FindChar(character.typeId);
+	bool saved = true;
+	if (charData) {
+		if (_snprintf(line, 100, "%d", character.typeId & 0x3FFFFFF) < 0) {
+			line[100] = 0;
+		}
+		int length = (int)strlen(line);
+
+		for (int i = 0; i < 10; i++) {
+			unsigned long part = character.partTypeIds[i];
+			if (part) {
+				if (((part >> 18) & 0xFF) > 9 || ((part >> 13) & 0x1F) > 9 || ((part >> 11) & 3) > 9
+					|| ((part >> 9) & 3) > 9 || (part & 0x1FF) > 9) {
+					saved = false;
+					const char *partName = NULL;
+					IFF_STRUCT::sPart *partData = ItemManager()->FindPart(character.partTypeIds[i]);
+					if (partData) {
+						partName = partData->m_name;
+					}
+					if (onError) {
+						// "Cannot save the following.\n[ %s: %s ]\n"
+						onError(MakeStr("\xb4\xd9\xc0\xbd\xc0\xbb \xc0\xfa\xc0\xe5\xc7\xd2 \xbc\xf6 \xbe\xf8\xbd\xc0\xb4\xcf\xb4\xd9.\n[ %s: %s ]\n", charData->m_name, partName));
+					}
+					break;
+				}
+				if (_snprintf(line + length, 100 - length, "|%d%d%d%d%d", (part >> 18) & 0xFF, (part >> 13) & 0x1F, (part >> 11) & 3, (part >> 9) & 3, part & 0x1FF) < 0) {
+					line[100] = 0;
+				}
+			}
+			else {
+				if (_snprintf(line + length, 100 - length, "|%d", 0) < 0) {
+					line[100] = 0;
+				}
+			}
+			length = (int)strlen(line);
+		}
+
+		if (_snprintf(line + length, 100 - length, "#%s\n", charData->m_name) < 0) {
+			line[100] = 0;
+		}
+		if (saved) {
+			file << line;
+		}
+	}
+
+	file.close();
+	return saved;
 }
 
 // g_starmode.cpp:516

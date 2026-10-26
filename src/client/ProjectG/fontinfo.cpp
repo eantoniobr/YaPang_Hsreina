@@ -5774,7 +5774,8 @@ void CExtraHoleInfo::UpdateLeader(void) {
 			m_leader = GOLFDOC()->m_myPlayerIndex;
 		} else {
 			unsigned char me = GOLFDOC()->m_myPlayerIndex;
-			if (m_cupDistance[me] < m_cupDistance[m_leader] || m_cupDistance[me] == m_cupDistance[m_leader] && m_shotTime[me] < m_shotTime[m_leader]) {
+			unsigned long myDist = m_cupDistance[me];
+			if (myDist < m_cupDistance[m_leader] || myDist == m_cupDistance[m_leader] && m_shotTime[me] < m_shotTime[m_leader]) {
 				m_leader = me;
 			}
 		}

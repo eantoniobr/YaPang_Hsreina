@@ -17,6 +17,9 @@ One exception: `src/jp/` is not matching. It is the JP 983 client's game
 code around its Refresh UI, decompiled for a port and compiled by clang only
 (`src/jp/README.md`).
 
+The offline port (ProjectG-Offline) also compiles `src/` with GCC and clang.
+`docs/PORT_BUILDS.md` lists what a change must keep working there.
+
 Third-party code linked into the game (the C++ library, ATL, Lua, FreeType,
 libpng, zlib, nProtect GameGuard, Miles) is not decompiled.
 
