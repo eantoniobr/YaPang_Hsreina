@@ -51,6 +51,7 @@ extern "C" char* data_a9cd00[];
 #include <atlmisc.h>
 
 #include <algorithm>
+#include <numeric>
 
 bool IsUccClothes(unsigned long typeId);
 void SetTradeResultCode(int code, int msgId, sTradeItem* pItem);
@@ -1393,11 +1394,7 @@ void FrTradeBuyDlg::OnOkBnUp(void) {
 			return;
 		}
 
-		// std::accumulate(pList->begin(), pList->end(), (__int64)0, SumForTradeItemList)
-		// in the original (<numeric> is missing from externs/vs-2003).
-		__int64 total = 0;
-		for (std::list<sTradeItem>::iterator sumIt = pList->begin(); sumIt != pList->end(); ++sumIt) total = SumForTradeItemList(total, *sumIt);
-
+		__int64 total = std::accumulate(pList->begin(), pList->end(), (__int64)0, SumForTradeItemList);
 		if (total > WSingleton<CSharedDoc>::Instance()->m_myPang) {
 			SetTradeResultCode(0x15, 225, 0);
 			bEnoughPang = false;

@@ -219,15 +219,16 @@ FrChangeRoomInfoDlg::FrChangeRoomInfoDlg(void) {
 
 	m_roomInfo = WSingleton<CSharedDoc>::Instance()->m_roomInfo;
 
+	int gameType = m_roomInfo.m_gameType;
 	m_hole = m_roomInfo.m_holeCount;
 	m_userLimit = m_roomInfo.m_userLimit;
 	m_textType = 0;
-	m_gameType = m_roomInfo.m_gameType;
+	m_gameType = gameType;
 	m_gameTime = m_roomInfo.m_value51;
 	m_shotTime = m_roomInfo.m_value4D;
 	m_course = m_roomInfo.m_course;
 	m_holeType = m_roomInfo.m_value4B;
-	switch (m_gameType) {
+	switch (gameType) {
 	case 0:
 	case 1:
 	case 3:
