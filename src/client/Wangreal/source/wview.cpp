@@ -716,7 +716,8 @@ WMatrix __cdecl MakeCameraMatrix(const WVector& pos, const WVector& tag) {
 	mat.za.Normalize();
 
 	if (WisEqual(Abs(mat.za.y), 1.0f, g_EPSILON)) {
-		mat.ya = WCrossProduct(mat.za, WVector::UNIT_POS_X);
+		const WVector& axis = WVector::UNIT_POS_X;
+		mat.ya = WCrossProduct(mat.za, axis);
 		mat.xa = WCrossProduct(mat.ya, mat.za);
 	} else {
 		mat.ya = WVector::UNIT_POS_Y;
