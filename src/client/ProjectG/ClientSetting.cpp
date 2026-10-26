@@ -34,6 +34,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef JP_PAKS // the JP Refresh UI hooks (docs/JP_REFRESH_UI.md); only port/CMakeLists.txt defines JP_PAKS
+#undef R_OK    // <unistd.h>'s access() mode would replace RFManager.h's R_OK enumerator
+#include "RFSceneManager.h"
+#include "RFLobbyDesktop.h"
+#include "frelement.h"
+#endif
 
 // commonutil.cpp:1037 (not declared in commonutil.h yet)
 void LimitText(char* str, int limit);
@@ -946,13 +952,41 @@ void COption::vApplyLobbyScreenSize(void) {
 	if (CShadowManager::Instance())
 		CShadowManager::Instance()->Reset();
 
+#ifdef JP_PAKS
+	// JP 0x494950: the lobby keeps the chosen resolution (the KR one is
+	// always 800 x 600), then the ad ticker follows label_ad.
+	vChangeScreenSize(m_option.m_screenWidth, m_option.m_screenHeight, m_option.m_screenBpp);
+
+	JpLobbyDesktop_PlaceAdTicker();
+#else
 	vChangeScreenSize(800, 600, m_option.m_screenBpp);
+#endif
 }
+
+#ifdef JP_PAKS
+// JP 0x4949a0: the lobby at an explicit size (the web pages' 800 x 600).
+void COption::vApplyLobbyScreenSize(int width, int height) {
+	if (CShadowManager::Instance())
+		CShadowManager::Instance()->Reset();
+
+	vChangeScreenSize(width, height, m_option.m_screenBpp);
+
+	JpLobbyDesktop_PlaceAdTicker();
+}
+#endif
 
 // clientsetting.cpp:1293
 bool COption::vChangeScreenSize(int width, int height, int bpp) {
 	int captureMode;
 	bool captureChanged = false;
+
+#ifdef JP_PAKS
+	// JP 0x494120 never goes below the minimum size (800 x 600 unless set).
+	if (width < m_option.m_minScreenWidth || height < m_option.m_minScreenHeight) {
+		width = m_option.m_minScreenWidth;
+		height = m_option.m_minScreenHeight;
+	}
+#endif
 
 	m_videoDevice->Command(W_VDEV_GET_CAPTURE_MODE, (intptr_t)&captureMode, 0);
 
@@ -993,6 +1027,19 @@ bool COption::vChangeScreenSize(int width, int height, int bpp) {
 	m_globalView->SetClip(clipNear, clipFar, false);
 	m_globalView->SetFOV(fov);
 	m_globalView->UpdateCamera();
+
+#ifdef JP_PAKS
+	// JP 0x494120: the UI follows the new size, the Fresh desktop
+	// (FrDesktop::Init 0xc01020) and the Refresh root, whose anchors place
+	// the lobby's windows (RFSceneManager::SetResolution 0x6035b0). The JP
+	// then posts message 0x5a to "Lobby", which its CLobbyMain passes on;
+	// the KR CLobbyMain's 0x5a is the room slot message (pointer params),
+	// so it is not posted.
+	g_pFresh->GetDesktop()->Init(m_globalView->GetWidth(), m_globalView->GetHeight());
+
+	if (RFSceneManager::Instance())
+		RFSceneManager::Instance()->SetResolution(m_globalView->GetWidth(), m_globalView->GetHeight());
+#endif
 
 	return result;
 }
@@ -1365,6 +1412,53 @@ const sOption* COption::GetOption(void) {
 	return &m_option;
 }
 
+#ifdef JP_PAKS
+// JP 0xbe6c90 (an FrForm member there): the form back where FrForm::_Init
+// creates it, the middle of the desktop for its template's size, moved by
+// `offset`. The JP moves it through vfn +0x8c with the whole rect.
+static void JpForm_Recenter(FrForm* form, const WPoint& offset) {
+	FrWndManager* manager = g_pFresh->GetManager();
+	FrElementForm* element = manager->GetDocument()->GetForm(form->GetWndName());
+	if (element) {
+		WSize size((float)element->m_bgSize.w, (float)element->m_bgSize.h);
+		WPoint pos = manager->GetCreatePosition(size);
+		form->MoveWindow(WPoint(pos.x + offset.x, pos.y + offset.y));
+	}
+}
+
+// JP 0x494bb0: CheckPendingChanges's callback on the desktop's children.
+// Each visible form goes back to the middle of the new screen; the lobby
+// pages (My Room, the shop, the single-player room) 0.3 of the width past
+// 800 to the right of it, as their widgets open them (CShopWidget::Open).
+// The JP moves the others to the middle itself (y offset 0), which takes
+// the room list and the room forms back over the top bar (CLobbyMain opens
+// them 35 px under it, JP 0xabcab0): the port keeps each form's height
+// above or below its middle on the old screen, whose height is `param`.
+static bool JpRecenterForm(FrWnd* wnd, void* param) {
+	if (wnd->IsVisible()) {
+		FrForm* form = DYNAMIC_CAST(FrForm, wnd);
+		if (form) {
+			float x = 0.0f;
+			const std::string& name = form->GetWndName();
+			if (name == "realmyroom" || name == "shopmain" || name == "gameroom_single")
+				x = (float)((g_view->GetWidth() - 800.0) * 0.3f);
+
+			float y = 0.0f;
+			FrElementForm* element = g_pFresh->GetManager()->GetDocument()->GetForm(name);
+			if (element) {
+				// FrWndManager::GetCreatePosition's y on the old desktop.
+				int oldY = (int)((*(float*)param - element->m_bgSize.h + 1.0f) * 0.5f);
+				if (oldY < 0)
+					oldY = 0;
+				y = form->GetRect().y - oldY;
+			}
+			JpForm_Recenter(form, WPoint(x, y));
+		}
+	}
+	return true;
+}
+#endif
+
 // clientsetting.cpp:1756
 void COption::CheckPendingChanges(void) {
 	if (!m_changePending)
@@ -1377,6 +1471,9 @@ void COption::CheckPendingChanges(void) {
 		|| m_option.m_screenHeight != m_newOption.m_screenHeight
 		|| m_option.m_screenBpp != m_newOption.m_screenBpp
 		|| m_option.m_fillScreen != m_newOption.m_fillScreen) {
+#ifdef JP_PAKS
+		float oldDesktopHeight = g_pFresh ? g_pFresh->GetDesktop()->GetRect().h : 600.0f;
+#endif
 		if (CBrowser::Instance())
 			CBrowser::Instance()->ResetCount();
 
@@ -1413,13 +1510,23 @@ void COption::CheckPendingChanges(void) {
 			m_option.m_fillScreen = m_newOption.m_fillScreen;
 			m_option.m_wideMode = m_newOption.m_wideMode;
 			vCheckScreenSize(m_newOption.m_screenWidth, m_newOption.m_screenHeight, m_newOption.m_screenBpp); m_bar_Y = m_option.m_screenHeight - 62.0f;
+#ifdef JP_PAKS
+			// JP 0x49734e: the lobby at the new resolution (0x494950).
+			vApplyLobbyScreenSize();
+#else
 			if (CShadowManager::Instance())
 				CShadowManager::Instance()->Reset();
 			vChangeScreenSize(800, 600, m_option.m_screenBpp);
+#endif
 		}
 
 		if (CChatMsg::Instance())
 			CChatMsg::Instance()->ResetUiPosition();
+#ifdef JP_PAKS
+		// JP 0x497375: the open forms back to the middle of the new screen.
+		if (g_pFresh)
+			g_pFresh->GetDesktop()->EnumerateChildWindow(JpRecenterForm, &oldDesktopHeight);
+#endif
 	}
 
 	m_option.m_overallLevel = m_newOption.m_overallLevel;

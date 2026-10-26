@@ -1830,6 +1830,13 @@ void JpLobbyDesktop_RefreshOnShow(void) {
 	}
 }
 
+// 0x5fa900, a thunk to 0x5f8f20.
+void JpLobbyDesktop_PlaceAdTicker(void) {
+	if (RFLobbyDesktop::s_instance != NULL) {
+		RFLobbyDesktop::s_instance->RefreshOnShow_5f8f20();
+	}
+}
+
 // 0x5fbe70 on s_instance: the JP shop and My Room pages call the member
 // directly after their own s_instance test (0xa90004, 0xa8fea8, 0x61dc2f,
 // 0x61dda6 ...), so this has no test of its own.
