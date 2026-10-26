@@ -256,7 +256,6 @@ public:
 	const char* vGetScrResText(int width, int height, int bpp, bool windowed);
 	const char* vGetScrResText(int index);
 	void vGetScrResLvl(const char* text, int* width, int* height, int* bpp);
-
 	void SetGlobalView(WView* view);
 	void SetAudioManager(CSoundManager* audioManager);
 	void SetInputManager(CInputManager* inputManager);
@@ -289,7 +288,6 @@ public:
 	bool dIsBaseMeshTestEnabled(void);
 	void dSetReplayMode(int mode);
 	bool dIsVersionInfoEnabled(void);
-
 	// Inline accessors of clientsetting.h, emitted by the units using them.
 	int vGetTnLMode(void) const;
 	int vGetParticleLevel(void) const;
@@ -319,7 +317,9 @@ public:
 	int gGetCutinFlag(void);
 	void SetQuitWindowed(bool windowed);
 	bool GetQuitWindowed(void);
-
+#ifdef JP_PAKS // the class keeps its line count: the inlines below carry the original lines
+	void vApplyLobbyScreenSize(int width, int height);  // JP 0x4949a0: the lobby at an explicit size
+#endif
 protected:
 	void InitVars(void);
 	void Init(void);

@@ -37,6 +37,8 @@ class RFLobbyDesktop : public RFFormDesktopBase<RFWndEx> {
 	// The shop page's glue (JpShopWidget.cpp) runs the protected RefreshOnShow
 	// on s_instance; defined in RFLobbyDesktop.cpp.
 	friend void JpLobbyDesktop_RefreshOnShow(void);
+	// COption's lobby screen sizes (ClientSetting.cpp) place the ad ticker.
+	friend void JpLobbyDesktop_PlaceAdTicker(void);
 	// The shop and My Room tab changes (JpShopMain 0xa90000 / 0xa8fb10,
 	// JpRealMyRoomMain SetSubTab 0x61d7a0 / 0x61dd00) run the
 	// protected SetBarSelection and UpdateLobbyCamera on s_instance
@@ -434,5 +436,10 @@ END_LAYOUT_CHECK
 // inline call after a purchase / the cash refresh (CShopWidget::OnPacket
 // 0x5e0ff0). Callers that cannot include this header (R_OK) declare it.
 void JpLobbyDesktop_RefreshOnShow(void);
+
+// 0x5fa900 (a thunk to RefreshOnShow_5f8f20) on s_instance when there is one:
+// the ad ticker follows label_ad after a screen size change (COption's
+// lobby sizes 0x494950 / 0x4949a0, which test s_instance themselves).
+void JpLobbyDesktop_PlaceAdTicker(void);
 
 #endif
