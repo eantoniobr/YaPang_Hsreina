@@ -2973,7 +2973,8 @@ void CScreen::DrawApproachInfo(void) {
 				break;
 			}
 
-			float x = g_view->GetWidth() - 205.0f;
+			WPoint pt;
+			pt.x = g_view->GetWidth() - 205.0f;
 
 			std::string desc(GOLFDOC()->GetApproachMissionDesc());
 			std::string lines[4] = { "\0" };
@@ -3003,7 +3004,7 @@ void CScreen::DrawApproachInfo(void) {
 			}
 
 			for (int i = 0; i < 4; i++)
-				m_pFont->Print(g_view, x, i * 17.0f + 138.0f, lines[i].c_str(), 0, 0xFFFFFFFF, NULL);
+				m_pFont->Print(g_view, pt.x, i * 17.0f + 138.0f, lines[i].c_str(), 0, 0xFFFFFFFF, NULL);
 		}
 
 		m_pFont->Flush(g_view);

@@ -52,7 +52,7 @@ static bool PgFxNamedLight(const char *name) {
 // form on LP64, where those offsets no longer hold (docs/PORTABILITY.md).
 #define FXBOX_ORIGINAL_SPRAYS(box) ((box).m_originalSprays)
 #define FXBOX_RESOURCE_MANAGER(box) ((box).m_pResourceManager)
-#define FXBOX_CAMERA(box) (*(const WMatrix**)((char*)&(box) + 0x168))
+#define FXBOX_CAMERA(box) ((box).m_pCamera)
 
 // Wangreal's WVector division (wmath.inl), not declared in wmath.h yet.
 WVector operator/(const WVector& v, float f);

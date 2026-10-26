@@ -7,9 +7,13 @@
 #include <malloc.h>
 #include <windows.h>
 #if !defined(_MSC_VER)
+#ifdef __MINGW32__
+#include <malloc.h>
+#else
 // The port's <malloc.h> has no _alloca yet.
 #include <alloca.h>
 #define _alloca alloca
+#endif
 #endif
 
 // On the port wchar_t is 4 bytes: the shim's MultiByteToWideChar and
