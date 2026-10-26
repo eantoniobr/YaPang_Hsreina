@@ -210,17 +210,18 @@ bool WStrStr_JP(char *out, unsigned short *text, int textLen, unsigned short *wo
 		unsigned short *textPos = &text[i + 1];
 
 		while (*textPos != 0 && *wordPos != 0) {
-			int wordCh;
-			int textCh;
+			// Each branch compares on its own (the original's 16-bit compare
+			// in the non-ASCII one); the int-variable, bool and ?: forms
+			// merge the compare and score lower.
 			if (*textPos < 0x80 && *wordPos < 0x80) {
-				wordCh = tolower(*wordPos);
-				textCh = tolower(*textPos);
+				if (tolower(*wordPos) == tolower(*textPos))
+					goto same;
 			} else {
-				wordCh = *wordPos;
-				textCh = *textPos;
+				if (*textPos == *wordPos)
+					goto same;
 			}
 
-			if (textCh != wordCh) {
+			{
 				int k;
 				for (k = 0; k < 28; k++) {
 					if (*textPos == FakeTable[k])
@@ -229,9 +230,11 @@ bool WStrStr_JP(char *out, unsigned short *text, int textLen, unsigned short *wo
 
 				if (k == 28)
 					break;
-			} else {
-				wordPos++;
+				goto next;
 			}
+same:
+			wordPos++;
+next:
 			textPos++;
 		}
 
