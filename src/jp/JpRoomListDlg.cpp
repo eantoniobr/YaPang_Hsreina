@@ -1261,8 +1261,8 @@ void FrRoomListDlg::OnUserListInit(intptr_t param) {
 		// JP +0x42 bit 0 = the KR invisible bit at +0x3e). Someone who is
 		// not an administrator sees an administrator only while its
 		// invisible bit is set.
-		const std::map<uint32_t, sBriefUserInfo>& users = JpSharedDoc_GetLobbyUserMap();
-		for (std::map<uint32_t, sBriefUserInfo>::const_iterator i = users.begin(); i != users.end(); ++i) {
+		const std::map<DWORD, sBriefUserInfo>& users = JpSharedDoc_GetLobbyUserMap();
+		for (std::map<DWORD, sBriefUserInfo>::const_iterator i = users.begin(); i != users.end(); ++i) {
 			const sBriefUserInfo& user = i->second;
 			if (!Jp_IsAdminIdentity(-1)) {
 				if (!user.identityBits.administrator) {
