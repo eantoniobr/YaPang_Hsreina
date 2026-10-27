@@ -122,6 +122,9 @@ public:
 	// Ours (read inline by LobbyPlayer 0x566cd0 and others): the input
 	// handler (+0x34), NULL before Setup.
 	RefreshInputHandler* GetInput() const { return m_input.get(); }
+	// Ours (written inline by ntAvatarChatMain::ProcessUI 0x7b3280): whether
+	// PreDraw and Draw run (+0x40), the Refresh UI shown or hidden.
+	void SetEnabled(bool enabled) { m_enabled = enabled; }
 	// 0x603710 (name ours): with the game's CMouseCursor (0xe73e0c), its
 	// JP-only lock (+0x138) cleared, the JP SetCursor(cursor, 1) (0x891020),
 	// then the lock and m_cursorLocked set to `lock`.

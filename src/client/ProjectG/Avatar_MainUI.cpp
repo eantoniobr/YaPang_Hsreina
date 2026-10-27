@@ -47,6 +47,9 @@
 // so the "to all" label matches the translated target combo (SharedDoc
 // InitReservedChatList).
 const char* Jp_LookupText(const char* key);
+// src/jp/RFSceneManager.cpp: the Refresh UI (the JP lounge's top and bottom
+// bars) shown or hidden, RFSceneManager +0x40 (ProcessUI 0x7b3280).
+void Jp_RefreshScene_SetEnabled(bool enabled);
 #endif
 
 // The gateway actor's name (nameless data at 0xa82e1c).
@@ -1215,6 +1218,10 @@ void ntAvatarChatMain::ProcessUI(float) {
 			m_uiCycle = (m_uiCycle + 1) % 3;
 
 			g_pFresh->Toggle(m_uiCycle != 2);
+#ifdef JP_PAKS
+			// JP 0x7b3280: the Refresh UI too.
+			Jp_RefreshScene_SetEnabled(m_uiCycle != 2);
+#endif
 			WSingleton<CMouseCursor>::Instance()->Toggle(m_uiCycle != 2);
 			ShowOverAndUnderBar(m_uiCycle != 1);
 
@@ -1227,6 +1234,10 @@ void ntAvatarChatMain::ProcessUI(float) {
 	} else {
 		m_uiCycle = 0;
 		g_pFresh->Toggle(true);
+#ifdef JP_PAKS
+		// JP 0x7b3280: the Refresh UI too.
+		Jp_RefreshScene_SetEnabled(true);
+#endif
 	}
 
 	if ((g_input->Get("LCONTROL", false) || g_input->Get("RCONTROL", false)) && g_input->GetDown("EMOTICON", false)) {
