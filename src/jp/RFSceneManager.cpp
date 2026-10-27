@@ -465,3 +465,12 @@ void RFSceneManager::SetAllInputDisabled(bool disabled) {
 	SetFreshInputDisabled(disabled);
 	SetInputDisabled(disabled);
 }
+
+// Ours, for the units off the Refresh include path (Avatar_MainUI.cpp): the
+// scene manager's m_enabled, as ntAvatarChatMain::ProcessUI (0x7b3280) sets
+// it with the lounge's interface cycle; nothing without a scene manager.
+void Jp_RefreshScene_SetEnabled(bool enabled) {
+	if (RFSceneManager::Instance() != NULL) {
+		RFSceneManager::Instance()->SetEnabled(enabled);
+	}
+}
