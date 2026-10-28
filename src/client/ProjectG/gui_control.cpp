@@ -521,9 +521,10 @@ void CScreen::OnProcess(float elapsed) {
 			}
 		}
 
-		float startX = g_view->GetWidth() * 0.5f - 50.0f;
-		float startY = g_view->GetHeight() * 0.3f;
-		float endX = g_view->GetWidth() - 250.0f;
+		WVector2D start;
+		start.x = g_view->GetWidth() * 0.5f - 50.0f;
+		start.y = g_view->GetHeight() * 0.3f;
+		WVector2D end(g_view->GetWidth() - 250.0f, 2.0f);
 
 		switch (m_tutoTitleState) {
 		case 0:
@@ -536,8 +537,8 @@ void CScreen::OnProcess(float elapsed) {
 			else {
 				m_tutoTitleAlpha = (unsigned char)(m_tutoTitleTime * 255.0f);
 			}
-			m_tutoTitleX = startX;
-			m_tutoTitleY = startY;
+			m_tutoTitleX = start.x;
+			m_tutoTitleY = start.y;
 			break;
 		case 1: {
 			m_tutoTitleTime += elapsed;
@@ -548,7 +549,7 @@ void CScreen::OnProcess(float elapsed) {
 				if (pTutorial)
 					pTutorial << MsgObject(0, 0x148, 0, 0, 0, 0, 0);
 			}
-			WVector2D pos = WVector2D(startX, startY) * (1.0f - m_tutoTitleTime) + WVector2D(endX, 2.0f) * m_tutoTitleTime;
+			WVector2D pos = start * (1.0f - m_tutoTitleTime) + m_tutoTitleTime * end;
 			m_tutoTitleX = pos.x;
 			m_tutoTitleY = pos.y;
 			break;
@@ -558,9 +559,10 @@ void CScreen::OnProcess(float elapsed) {
 
 	if (GOLFDOC()->m_gameState >= 0 && GOLFDOC()->m_gameState <= 0xE) {
 		if (GOLFDOC()->m_gameState != 6 && GOLFDOC()->m_gameState != 7) {
-			float startX = g_view->GetWidth() * 0.5f;
-			float startY = g_view->GetHeight() * 0.33333334f;
-			float endX = (float)((int)g_view->GetWidth() / 2);
+			WVector2D start;
+			start.x = g_view->GetWidth() * 0.5f;
+			start.y = g_view->GetHeight() * 0.33333334f;
+			WVector2D end((float)((int)g_view->GetWidth() / 2), 10.0f);
 
 			switch (m_missionTitleState) {
 			case 0:
@@ -570,8 +572,8 @@ void CScreen::OnProcess(float elapsed) {
 					m_missionTitleTime = 0;
 					m_missionTitleState = 1;
 				}
-				m_missionTitleX = startX;
-				m_missionTitleY = startY;
+				m_missionTitleX = start.x;
+				m_missionTitleY = start.y;
 				break;
 			case 1: {
 				m_missionTitleTime += elapsed;
@@ -581,7 +583,7 @@ void CScreen::OnProcess(float elapsed) {
 					m_missionTitleAlpha = 1.0f;
 					m_missionTitleState = 2;
 				}
-				WVector2D pos = WVector2D(startX, startY) * (1.0f - m_missionTitleTime) + WVector2D(endX, 10.0f) * m_missionTitleTime;
+				WVector2D pos = start * (1.0f - m_missionTitleTime) + end * m_missionTitleTime;
 				m_missionTitleX = pos.x;
 				m_missionTitleY = pos.y;
 				break;

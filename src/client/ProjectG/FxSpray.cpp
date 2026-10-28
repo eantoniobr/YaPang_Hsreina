@@ -1645,9 +1645,9 @@ void CFxSpray::DrawSprite(WView* pView, CFxParticle* pParticle, const WVector& p
 			float nearDist = pView->GetClipNearValue() / facing;
 			WVector drawPos;
 			if (sqrtf(distSq) < nearDist + m_param.m_fCamOffset) {
-				drawPos = dir * (nearDist + 0.01f) + eye;
+				drawPos = WVector(dir) * (nearDist + 0.01f) + eye;
 			} else {
-				drawPos = pos - dir * m_param.m_fCamOffset;
+				drawPos = pos - WVector(dir) * m_param.m_fCamOffset;
 			}
 			pParticle->m_pSprite->SetPos(drawPos);
 		} else {

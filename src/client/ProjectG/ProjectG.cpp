@@ -1881,9 +1881,14 @@ void CProjectG::OnPacket(WReceivedPacket& packet) {
 				WReceivedPacket *pQueued = m_recvPacketQueue.front();
 
 				if (pTask->OnPacket(*pQueued) == 0) {
-					pQueued->Reset();
-					if (pPreserved == 0 || pPreserved->OnPacket(*pQueued) == 0) {
-						if (pPreserved) pQueued->Reset();
+					if (pPreserved) {
+						pQueued->Reset();
+						if (pPreserved->OnPacket(*pQueued) == 0) {
+							pQueued->Reset();
+							pQueued->Decode2();
+						}
+					} else {
+						pQueued->Reset();
 						pQueued->Decode2();
 					}
 				}

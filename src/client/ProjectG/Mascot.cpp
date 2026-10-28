@@ -261,7 +261,8 @@ void CCameraBird::CheckTarget(float dt) {
 
 	m_matrix.za.y = 0.0f; m_matrix.za.Normalize();
 	m_matrix.za *= -1.0f;
-	m_matrix.ya = WVector::UNIT_POS_Y;
+	WMatrix &m = m_matrix;
+	m.ya = WVector::UNIT_POS_Y;
 	m_matrix.xa = WCrossProduct(m_matrix.ya, m_matrix.za);
 
 	WVector pivot = m_matrix.pivot;

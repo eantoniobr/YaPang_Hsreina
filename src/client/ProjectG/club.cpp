@@ -979,7 +979,8 @@ sClubSet *CClub::AddClubSet(unsigned long typeId) {
 				clubSet->m_cameras[i].pivot = camera->info->spherePivot;
 				clubSet->m_cameras[i].za = (target->info->spherePivot - camera->info->spherePivot).Normalize();
 				clubSet->m_cameras[i].xa = WCrossProduct(WVector(0.0f, cosf(angle * data_9eb1f0), sinf(angle * data_9eb1f0)), clubSet->m_cameras[i].za).Normalize();
-				clubSet->m_cameras[i].ya = WCrossProduct(clubSet->m_cameras[i].za, clubSet->m_cameras[i].xa);
+				WMatrix &cam = clubSet->m_cameras[i];
+				clubSet->m_cameras[i].ya = WCrossProduct(cam.za, cam.xa);
 
 				clubSet->m_lights[i].nearone = clubSet->m_cameras[i].ya * 10.0f + clubSet->m_cameras[i].pivot - target->info->spherePivot;
 			} else {

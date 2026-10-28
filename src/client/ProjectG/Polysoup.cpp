@@ -1446,6 +1446,7 @@ void WPolySoup::ChangeObjectTexture(const char *oldName, const char *newName, in
 	int oldHandle;
 	int newHandle;
 	w_mesh *pMesh;
+	WPuppet *pPuppet;
 
 	if (index == -1) {
 		oldHandle = g_resrcmng->FindTexture(oldName)->texhandle;
@@ -1459,27 +1460,27 @@ void WPolySoup::ChangeObjectTexture(const char *oldName, const char *newName, in
 		if (pMesh == 0) {
 			return;
 		}
-		m_models[0]->m_pPuppet->ChangeTextureByHandle(newHandle, oldHandle, m_models[0]->m_pPuppet);
+		pPuppet = m_models[0]->m_pPuppet;
 	} else {
-		int modelIndex = index;
-
 		for (int i = 0; i < m_numObjects; i++) {
 			if (m_models[i]->m_objIndex == index) {
-				modelIndex = i;
+				index = i;
 				break;
 			}
 		}
 
 		oldHandle = g_resrcmng->FindTexture(oldName)->texhandle;
 		newHandle = g_resrcmng->LoadTexture(newName, 0, 0, 0);
-		pMesh = m_models[modelIndex]->m_pPuppet->GetRootBone()->GetMesh();
+		pMesh = m_models[index]->m_pPuppet->GetRootBone()->GetMesh();
 
 		if (pMesh == 0) {
 			return;
 		}
 		pMesh = pMesh->next;
-		m_models[modelIndex]->m_pPuppet->ChangeTextureByHandle(newHandle, oldHandle, m_models[modelIndex]->m_pPuppet);
+		pPuppet = m_models[index]->m_pPuppet;
 	}
+
+	pPuppet->ChangeTextureByHandle(newHandle, oldHandle, pPuppet);
 }
 
 // polysoup.cpp:1527
@@ -3257,8 +3258,7 @@ bool WPolySoup::IsInPoly(WVector &pos, std::vector<sCupVtx> &verts) {
 	v[1] = WVector2D(verts[1].m_pos.x, verts[1].m_pos.z);
 	v[2] = WVector2D(verts[2].m_pos.x, verts[2].m_pos.z);
 	WVector2D p(pos.x, pos.z);
-	WVector2D e;
-	e = v[1] - v[0];
+	WVector2D e = v[1] - v[0];
 	e /= e.Magnitude();
 	WVector2D d;
 	d = v[2] - v[0];
@@ -3268,8 +3268,7 @@ bool WPolySoup::IsInPoly(WVector &pos, std::vector<sCupVtx> &verts) {
 	for (int i = 0; i < (int)verts.size() - 1; i++) {
 		WVector2D c(verts[i].m_pos.x, verts[i].m_pos.z);
 		WVector2D n(verts[i + 1].m_pos.x, verts[i + 1].m_pos.z);
-		WVector2D edge;
-		edge = n - c;
+		WVector2D edge = n - c;
 		edge /= edge.Magnitude();
 		WVector2D toPos;
 		toPos = p - c;

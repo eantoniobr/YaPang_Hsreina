@@ -188,8 +188,8 @@ void CSpot::OnInit(void) {
 	m_unknown68.Reset();
 	m_unknown30.Reset();
 
-	m_unknown80 = true;
 	m_unknown4c = 1.0f;
+	m_unknown80 = true;
 	m_unknown84 = 2.0f;
 	m_unknown88 = 12.0f;
 	m_unknown94 = 20.0f;

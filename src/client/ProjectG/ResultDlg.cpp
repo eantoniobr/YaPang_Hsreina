@@ -1516,8 +1516,9 @@ void FrUniteResultDlg::OnMyInfoAreaDraw(PG_MSGARG param) {
 	if (m_pRankBgBitmaps[bgIndex]) {
 		WPoint bgPos;
 		bgPos.x = areaPos.x + 13.0f;
-		bgPos.y = (11.0f - (float)(m_pRankBgBitmaps[bgIndex]->Height() / 2)) + areaPos.y;
-		WRect bgRect(bgPos.x, bgPos.y, (float)m_pRankBgBitmaps[bgIndex]->Width(), (float)m_pRankBgBitmaps[bgIndex]->Height());
+		float halfHeight = (float)(m_pRankBgBitmaps[bgIndex]->Height() / 2);
+		bgPos.y = (11.0f - halfHeight) + areaPos.y;
+		WRect bgRect(bgPos.x, bgPos.y,(float)m_pRankBgBitmaps[bgIndex]->Width(), (float)m_pRankBgBitmaps[bgIndex]->Height());
 
 		gdi->DrawTexture(m_pRankBgBitmaps[bgIndex], bgRect, 0xFFFFFFFF, 0);
 
@@ -1626,7 +1627,8 @@ void FrUniteResultDlg::OnMyInfoAreaDraw(PG_MSGARG param) {
 	IFF_ITEM_COMMON* pMascot = ItemManager()->FindCommonItem(myData.m_mascotTypeId);
 
 	if (pMascot) {
-		WRect mascotRect(areaPos.x + 453.0f, (11.0f - (float)(m_pBonusMascot01->Height() / 2)) + areaPos.y, (float)m_pBonusMascot01->Width(), (float)m_pBonusMascot01->Height());
+		float halfHeight = (float)(m_pBonusMascot01->Height() / 2);
+		WRect mascotRect(areaPos.x + 453.0f, (11.0f - halfHeight) + areaPos.y, (float)m_pBonusMascot01->Width(), (float)m_pBonusMascot01->Height());
 
 		if (pMascot->m_typeId == 0x40000001) {
 			gdi->DrawTexture(m_pBonusMascot01, mascotRect, 0xFFFFFFFF, 0);
@@ -1763,18 +1765,19 @@ void FrUniteResultDlg::OnRankListOwnerDraw(PG_MSGARG param) {
 	if (bgIndex < 3 && (pBg = m_pRankBgBitmaps[bgIndex]) != 0) {
 		WPoint pos = pItem->pos;
 
-		float bgX = pos.x + 13.0f;
-		float bgY = (11.0f - (float)pBg->Height() * 0.5f) + pos.y;
+		WPoint bgPos;
+		bgPos.x = pos.x + 13.0f;
+		bgPos.y = (11.0f - (float)pBg->Height() * 0.5f) + pos.y;
 
-		WRect bgRect(bgX, bgY, (float)m_pRankBgBitmaps[bgIndex]->Width(), (float)m_pRankBgBitmaps[bgIndex]->Height());
+		WRect bgRect(bgPos.x, bgPos.y, (float)m_pRankBgBitmaps[bgIndex]->Width(), (float)m_pRankBgBitmaps[bgIndex]->Height());
 
 		gdi->DrawTexture(pBg, bgRect, 0xFFFFFFFF, 0);
 
 		gdi->SetTextColor(0xFFFFFFFF, 0xFFFFFFFF);
 		gdi->SetTextStyle(1);
 
-		float rankX = (float)m_pRankBgBitmaps[bgIndex]->Width() * 0.5f + bgX;
-		bgY += 2.0f;
+		float rankX = (float)m_pRankBgBitmaps[bgIndex]->Width() * 0.5f + bgPos.x;
+		bgPos.y += 2.0f;
 
 		int rank;
 		if (m_resultDlgType == 2) {
@@ -1786,12 +1789,12 @@ void FrUniteResultDlg::OnRankListOwnerDraw(PG_MSGARG param) {
 			rank = pData->m_rank;
 		}
 
-		rank < 0xFF ? gdi->Print(WPoint(rankX, bgY), 1, "%d", rank) : gdi->Print(WPoint(rankX, bgY), 1, "-");
+		rank < 0xFF ? gdi->Print(WPoint(rankX, bgPos.y), 1, "%d", rank) : gdi->Print(WPoint(rankX, bgPos.y), 1, "-");
 
 		gdi->SetTextStyle(0);
 		gdi->SetTextColor(0xFF000000, 0xFFFFFFFF);
 
-		lineY = bgY;
+		lineY = bgPos.y;
 	}
 
 	m_pLevelBitmap = g_pFresh->GetBitmap(MakeStr("level_%03d", pData->m_level + 1));
@@ -1950,7 +1953,7 @@ void FrUniteResultDlg::OnRankListOwnerDraw(PG_MSGARG param) {
 
 	for (int i = 0; i <= 5; i++) {
 		if (WSingleton<CSharedDoc>::Instance()->m_awardPlayers[i].m_uid == pData->m_uid) {
-			WRect prizeRect(pItem->pos.x + 515.0f + offsetX, (11.0f - (float)(m_pPrizeBitmaps[i]->Height() / 2)) + pItem->pos.y, (float)m_pPrizeBitmaps[i]->Width(), (float)m_pPrizeBitmaps[i]->Height());
+			WRect prizeRect(offsetX + (pItem->pos.x + 515.0f), (11.0f - (float)(m_pPrizeBitmaps[i]->Height() / 2)) + pItem->pos.y, (float)m_pPrizeBitmaps[i]->Width(), (float)m_pPrizeBitmaps[i]->Height());
 
 			gdi->DrawTexture(m_pPrizeBitmaps[i], prizeRect, 0xFFFFFFFF, 0);
 			if (!m_bKeepTooltip[0])
