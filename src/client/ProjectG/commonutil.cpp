@@ -547,13 +547,12 @@ void InitPakedFile() {
 		WIN32_FIND_DATA fd;
 		HANDLE hFind = FindFirstFile("projectg*.pak", &fd);
 		char* name;
-		while (hFind != INVALID_HANDLE_VALUE) {
-			name = new char[strlen(fd.cFileName) + 1];
-			strcpy(name, fd.cFileName);
-			paks += name;
-			if (!FindNextFile(hFind, &fd)) {
-				break;
-			}
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				name = new char[strlen(fd.cFileName) + 1];
+				strcpy(name, fd.cFileName);
+				paks += name;
+			} while (FindNextFile(hFind, &fd));
 		}
 		FindClose(hFind);
 

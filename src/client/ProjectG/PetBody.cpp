@@ -879,13 +879,12 @@ void CPetBody::LookUpProcess(float delta) {
 		m_lookAngleTarget.x = pitch < -0.34906584f ? -0.34906584f : (pitch > 0.78539819f ? 0.78539819f : pitch);
 
 
-		float yaw = CalcDeltaAngle(*m_lookTarget - m_rotMatrix.pivot, m_rotMatrix.za * -1.0f);
-		m_lookAngleTarget.y = yaw;
+		m_lookAngleTarget.y = CalcDeltaAngle(*m_lookTarget - m_rotMatrix.pivot, m_rotMatrix.za * -1.0f);
 
-		if (m_bLookImmediate && Abs(yaw) > 0.78539819f) {
+		if (m_bLookImmediate && Abs(m_lookAngleTarget.y) > 0.78539819f) {
 
-			float over = Abs(yaw) - 0.78539819f;
-			SetRotate(WVector(m_rotation.x, m_rotation.y + (yaw > 0.0f ? over : -over), m_rotation.z));
+			float over = Abs(m_lookAngleTarget.y) - 0.78539819f;
+			SetRotate(WVector(m_rotation.x, m_rotation.y + (m_lookAngleTarget.y > 0.0f ? over : -over), m_rotation.z));
 		}
 
 

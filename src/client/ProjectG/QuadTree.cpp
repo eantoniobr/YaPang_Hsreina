@@ -2206,7 +2206,8 @@ void CQuadTree::ParsePuppetScript(int index, const char *script) {
 							// On water the dust effects become their water variants.
 							char arg[256] = { 0 };
 
-							WSliceStr(fxName).Get("dust", "%s", arg);
+							WSliceStr slice(fxName);
+							slice.Get("dust", "%s", arg);
 							std::string argStr(arg);
 							std::string fxStr(fxName);
 							std::string prefix = fxStr.substr(0, fxStr.length() - argStr.length() - 4);
@@ -2429,10 +2430,13 @@ bool CQuadTree::IsValid(const WVector &pos) {
 WVector CQuadTree::ApplyForce(void) {
 	WVector force(0.0f, 0.0f, 0.0f);
 
+	// copied member by member: WVector::operator= (memcpy) keeps the product in memory
 	if (!(WAbsBySign(GolfBall().m_curve) < g_EPSILON) && GolfBall().m_eventPreDataIndex[9] < 0) {
-		force = GolfClub().GetCurve() * GolfBall().m_curve * 0.75f * WVector(GolfBall().m_velocity.z * -1.0f, 0.0f, GolfBall().m_velocity.x).Normalize();
+		WVector curveForce = GolfClub().GetCurve() * GolfBall().m_curve * 0.75f * WVector(GolfBall().m_velocity.z * -1.0f, 0.0f, GolfBall().m_velocity.x).Normalize();
+		force.x = curveForce.x; force.y = curveForce.y; force.z = curveForce.z;
 	} else if (!(WAbsBySign(GolfBall().m_curve) < g_EPSILON) && GolfBall().m_eventPreDataIndex[12] < 0) {
-		force = (GolfClub().GetCurve() * GolfBall().m_curve * 0.75f) * WVector(GolfBall().m_velocity.z * -1.0f, 0.0f, GolfBall().m_velocity.x).Normalize();
+		WVector curveForce = GolfClub().GetCurve() * GolfBall().m_curve * 0.75f * WVector(GolfBall().m_velocity.z * -1.0f, 0.0f, GolfBall().m_velocity.x).Normalize();
+		force.x = curveForce.x; force.y = curveForce.y; force.z = curveForce.z;
 	}
 
 	if (!((GolfBall().m_flags & 0x20) && GolfBall().m_eventPreDataIndex[9] < 0)
@@ -3302,9 +3306,9 @@ void CQuadTree::ObjResponse(const WVector &dir, float t, const WVector &contactV
 	}
 
 	if (response.m_ball.m_lastContactIndex == -1) {
-		WVector &velocity = response.m_ball.m_velocity;
-		float dot = WDotProduct(velocity, contactVector);
+		float dot = WDotProduct(contactVector, response.m_ball.m_velocity);
 		WVector perpendicular = contactVector * (dot * -1.0f);
+		WVector &velocity = response.m_ball.m_velocity;
 		WVector tangent = perpendicular + velocity;
 		float spin = response.m_ball.GetInitSpin();
 
@@ -3326,7 +3330,8 @@ void CQuadTree::ObjResponse(const WVector &dir, float t, const WVector &contactV
 		response.m_ball.m_lastContactId = m_colList.back().m_objIndex;
 		response.m_ball.m_lastContactIndex = m_colList.back().m_triIndex;
 
-		WPolySoup::sTriangle *pTri = &m_pPolySoup->m_models[response.m_ball.m_lastContactId]->m_pTriangles[response.m_ball.m_lastContactIndex];
+		WPolySoup::sModel *pModel = m_pPolySoup->m_models[response.m_ball.m_lastContactId];
+		WPolySoup::sTriangle *pTri = &pModel->m_pTriangles[response.m_ball.m_lastContactIndex];
 
 		if (WAbsBySign(pTri->m_plane.normal.y) < g_EPSILON) {
 			response.m_ball.m_velocity.x = response.m_ball.m_velocity.y = response.m_ball.m_velocity.z = 0.0f;
@@ -4341,10 +4346,18 @@ void CQuadTree::DecalFragments(const WVector *box, const WVector &normal, WVecto
 		return;
 	}
 
-	WVector center(0.0f, 0.0f, 0.0f);
-	for (i = 0; i < 4; i++)
-		center += box[i];
-	center *= 0.25f;
+	// the box's center; the original's sum loop is not unrolled (a do-while)
+	float z = 0.0f;
+	float y = 0.0f;
+	float x = 0.0f;
+	i = 0;
+	do {
+		x += box[i].x;
+		y += box[i].y;
+		z += box[i].z;
+		i++;
+	} while (i < 4);
+	WVector center(x * 0.25f, y * 0.25f, z * 0.25f);
 
 	// the ground under the box's center, no lower than the base model's box
 	pos = center;
@@ -4604,8 +4617,7 @@ void CQuadTree::TraceOBB(const WVector &start, const WVector &end, const Waabb &
 			if (pModel->m_pPuppet->m_bbList.Find("char0")) {
 				w_bound_box *pBox = pModel->m_pPuppet->m_bbList.Find("char0");
 				while (pBox) {
-					Wobb obb;
-					obb = pBox->bone->GetMatrix();
+					Wobb obb(pBox->bone->GetMatrix());
 					count++;
 					obb *= (pBox->info->aabb.max - pBox->info->aabb.min) * 0.5f;
 					obb.center = pBox->info->spherePivot * pBox->bone->GetMatrix();
@@ -4627,8 +4639,7 @@ void CQuadTree::TraceOBB(const WVector &start, const WVector &end, const Waabb &
 		}
 
 		pTrace->m_fraction = fraction;
-		pTrace->m_plane.normal = plane.normal;
-		pTrace->m_plane.dis = plane.dis;
+		pTrace->m_plane = plane;
 		pTrace->m_flag = false;
 	}
 }
@@ -5159,8 +5170,8 @@ void CQuadTree::TraceOBB_New(const WVector &start, const WVector &end, const Waa
 			} else {
 				if (!(pos.y > pModel->m_sceneAabb.max.y) && !(pModel->m_sceneAabb.min.y - 10.0f > pos.y)) {
 					objBox = pModel->m_sceneAabb;
-					objBox.min = WVector(objBox.min.x - 1.0f, objBox.min.y, objBox.min.z - 1.0f);
-					objBox.max = WVector(objBox.max.x + 1.0f, objBox.max.y, objBox.max.z + 1.0f);
+					objBox.min.x = objBox.min.x - 1.0f; objBox.min.z = objBox.min.z - 1.0f;
+					objBox.max.x = objBox.max.x + 1.0f; objBox.max.z = objBox.max.z + 1.0f;
 
 					if (pos.x > objBox.min.x && pos.x < objBox.max.x && pos.z > objBox.min.z && pos.z < objBox.max.z) {
 						bHit = true;
@@ -5205,17 +5216,21 @@ bool CQuadTree::TraceAABB_BackGround(const WVector &start, const WVector &end, c
 	world.max.y = m_pPolySoup->m_models[0]->m_aabb.max.y;
 
 	// The box moved along the horizontal part of the path.
-	Waabb moved = box;
+	Waabb moved(box.min, box.max);
 	moved.min.x += delta.x;
 	moved.min.z += delta.z;
 	moved.max.x += delta.x;
 	moved.max.z += delta.z;
 
-	int inside = world.IsInclude(moved);
+	bool inside;
+	if (world.IsInclude(moved))
+		inside = true;
+	else
+		inside = false;
 	pTrace->m_fraction = 1.0f;
 	pTrace->m_flag = false;
 
-	return inside ? true : false;
+	return inside;
 }
 
 // quadtree.cpp:7314
@@ -5316,7 +5331,7 @@ void CQuadTree::TraceOBB_Avatar_genPosition(const WVector &start, const WVector 
 
 				delta.y = 0.0f;
 				Wobb moved; moved.center = obb.center; moved.extend[0] = obb.extend[0]; moved.extend[1] = obb.extend[1]; moved.extend[2] = obb.extend[2];
-				moved.center = WVector(delta.x + moved.center.x, moved.center.y, delta.z + moved.center.z);
+				moved.center += delta;
 
 				if (TestIntersectionOBB(avatarObb, moved)) {
 					WVector dir = delta;
@@ -5435,8 +5450,7 @@ void CQuadTree::TraceOBB_WallSliding(const WVector &start, const WVector &end, t
 						fraction = t;
 					}
 				} else {
-					Wobb moved;
-					moved = obb;
+					Wobb moved(obb);
 					if (option == 0) {
 						delta.y = 0.0f;
 					} else if (option == 1) {

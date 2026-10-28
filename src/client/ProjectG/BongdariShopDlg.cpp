@@ -1027,10 +1027,10 @@ void FrBongdariShopDlg::Processing(float dt) {
 			switch (m_movingData[data_af74c8].m_state) {
 			case 2:
 				if (m_pPetBonusBall[data_af74c8]) {
-					CExhibition* pBall = m_pPetBonusBall[data_af74c8];
+					WMatrix& mat = m_pPetBonusBall[data_af74c8]->GetMatrix();
 					float* pSpin = &m_movingData[data_af74c8].m_spin;
-					pBall->GetMatrix() *= RotMat(g_DEGTORAD * (dt * *pSpin * 8.0f), 2);
-					pBall->GetMatrix() *= RotMat(g_DEGTORAD * (dt * *pSpin * 8.0f), 1);
+					mat *= RotMat(g_DEGTORAD * (dt * *pSpin * 8.0f), 2);
+					mat *= RotMat(g_DEGTORAD * (dt * *pSpin * 8.0f), 1);
 				}
 				break;
 			case 3:
@@ -1163,21 +1163,20 @@ void FrBongdariShopDlg::DisplayItemSilhouette(void) {
 	FrGraphicInterface* pGDI = g_pFresh->GetManager()->GetGDI();
 
 	if (pGDI && m_bonusBallCount <= 5) {
+		unsigned long color = 0xffffffff;
 		WRect base = GetRect();
 		const Bitmap* pBmp = 0;
-		unsigned long color = 0xffffffff;
 		char text[8] = { 0 };
 
-		for (int i = 0; i < 9; i++) {
-			sItemSilhouette& sil = m_silhouettes[i];
-
-			switch (sil.m_state) {
+		sItemSilhouette* sil = m_silhouettes;
+		for (int i = 0; i < 9; i++, sil++) {
+			switch (sil->m_state) {
 			case 0:
 				color = 0xffffffff;
 				pBmp = m_pDefaultSilhouetteImage;
 				break;
 			case 1:
-				switch (sil.m_grade) {
+				switch (sil->m_grade) {
 				case 1:
 					color = 0xa02020a0;
 					break;
@@ -1189,10 +1188,10 @@ void FrBongdariShopDlg::DisplayItemSilhouette(void) {
 					break;
 				}
 
-				pBmp = sil.m_pImage;
+				pBmp = sil->m_pImage;
 				break;
 			case 2:
-				pBmp = sil.m_pImage;
+				pBmp = sil->m_pImage;
 				color = 0xffffffff;
 				break;
 			}
@@ -1201,19 +1200,19 @@ void FrBongdariShopDlg::DisplayItemSilhouette(void) {
 				float offX = 0.0f;
 				float offY = 0.0f;
 
-				if (sil.m_state > 0 && sil.m_state <= 2) {
-					if (ItemManager()->GetCouponKind(sil.m_slotParam)) {
+				if (sil->m_state > 0 && sil->m_state <= 2) {
+					if (ItemManager()->GetCouponKind(sil->m_slotParam)) {
 						offX = -7.0f;
 						offY = 2.0f;
 					}
 				}
 
-				WRect rect(base.x + g_arrPtItemSilhouette[i].x + offX, base.y + g_arrPtItemSilhouette[i].y + offY, (float)pBmp->Width(), (float)pBmp->Height());
+				WRect rect(g_arrPtItemSilhouette[i].x + (base.x + offX), base.y + g_arrPtItemSilhouette[i].y + offY, (float)pBmp->Width(), (float)pBmp->Height());
 
 				pGDI->DrawTexture(pBmp, rect, color, 0);
 
-				if (sil.m_state == 2 && sil.m_slot >= 0) {
-					int count = m_bonusBalls[sil.m_slot].m_count;
+				if (sil->m_state == 2 && sil->m_slot >= 0) {
+					int count = m_bonusBalls[sil->m_slot].m_count;
 
 					if (count > 1 && m_pTitleFont2a0) {
 						sprintf(text, "%d", count);
@@ -1221,9 +1220,9 @@ void FrBongdariShopDlg::DisplayItemSilhouette(void) {
 					}
 				}
 
-				if (sil.m_scale >= 0.0f && (int)sil.m_scale < 8) {
+				if (sil->m_scale >= 0.0f && (int)sil->m_scale < 8) {
 					if (m_pUserInfoUI) {
-						m_pUserInfoUI->Render(MakeStr("%d", (int)sil.m_scale), base.x + g_arrPtItemSilhouette[i].x - 25.0f, base.y + g_arrPtItemSilhouette[i].y - 43.0f, 1.5f, 0);
+						m_pUserInfoUI->Render(MakeStr("%d", (int)sil->m_scale), base.x + g_arrPtItemSilhouette[i].x - 25.0f, base.y + g_arrPtItemSilhouette[i].y - 43.0f, 1.5f, 0);
 					}
 				}
 			}
@@ -1467,9 +1466,11 @@ void FrBongdariShopDlg::DrawUserInfo(void) {
 
 // bongdarishopdlg.cpp:1887
 void FrBongdariShopDlg::SetOpeningBonusBallInfo(sBonusBall* pBall) {
-	char text[256];   // unused; the original's frame keeps its /GS cookie
-
 	if (pBall) {
+		// Otherwise unused: the dead store keeps the /GS cookie and stops cl
+		// inlining this function into Processing, as in the original.
+		char text[256];
+		text[0] = '\0';
 		IFF_ITEM_COMMON* pItem = ItemManager()->FindCommonItem(pBall->m_typeId);
 
 		if (pItem) {

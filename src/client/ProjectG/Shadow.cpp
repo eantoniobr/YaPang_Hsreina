@@ -397,7 +397,7 @@ void CShadowCaster::UpdateBSphere(WView *view, float minAngle, float minDist) {
 	// The near corner is a named vector (its products are spilled first);
 	// the far corner stays an expression the radius shares.
 	float tanFov = (float)tan((double)(fov * 0.5f));
-	float tanRatioFov = (float)tan((double)(view->GetRatio() * fov * 0.5f));
+	float tanRatioFov = tan(view->GetRatio() * fov * 0.5f);
 
 	WVector nearV(tanFov * nearDist, tanRatioFov * nearDist, nearDist);
 	float c = (WVector(tanFov * farDist, tanRatioFov * farDist, farDist).SquareMagnitude()
