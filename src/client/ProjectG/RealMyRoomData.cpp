@@ -1193,10 +1193,13 @@ void CRealMyRoomData::MoveModelPosition(unsigned char mode) {
 
 				GetPVS().TraceOBB_WallSliding(m_pSelectModel->m_pModelData->m_basePos, m_targetPos, &trace, m_pSelectModel->m_pModelData, m_pSelectModel->m_handle + 1, false);
 
-				WVector slide = trace.m_endPos - m_pSelectModel->m_pModelData->m_basePos;
+				WPolySoup::sModel *pData = m_pSelectModel->m_pModelData;
+				delta.x = trace.m_endPos.x - pData->m_basePos.x;
+				delta.y = trace.m_endPos.y - pData->m_basePos.y;
+				delta.z = trace.m_endPos.z - pData->m_basePos.z;
 
-				m_pSelectModel->m_pModelData->m_basePos += slide;
-				m_pSelectModel->m_pModelData->m_obb.center += slide;
+				pData->m_basePos += delta;
+				m_pSelectModel->m_pModelData->m_obb.center += delta;
 
 				m_pSelectModel->SetPosition(m_pSelectModel->m_pModelData->m_basePos);
 

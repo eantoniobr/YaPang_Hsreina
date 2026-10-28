@@ -439,14 +439,15 @@ void CCamera::ProcessMousePick(float dt) {
 
 		GolfClub().SelectClubByDist(sqrt(distSq) * 0.3125f);
 
-		vec = WCrossProduct(g_camera.ya, dir);
+		WVector cross;
+		cross = WCrossProduct(g_camera.ya, dir);
 
 		// The original reads the epsilon from a named constant (0x9ED8B4), not a __real.
-		if (!(WAbsBySign(vec.y) < g_EPSILON)) {
+		if (!(WAbsBySign(cross.y) < g_EPSILON)) {
 			float angle = acos(Between(-1.0f, dir.y * g_camera.ya.y + dir.z * g_camera.ya.z + dir.x * g_camera.ya.x, 1.0f));
 
 			if (!WisZero(angle, 1e-5f)) {
-				if (vec.y > 0.0f) {
+				if (cross.y > 0.0f) {
 					angle *= -1.0f;
 					m_rotateKey = -1;
 				} else {

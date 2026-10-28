@@ -1412,8 +1412,8 @@ void FrServerDlg::OnChannelListOwnerDraw(intptr_t param) {
 
 
 
-				WPoint pt(x + i * 6 + 1.0f, y + 1.0f);
-				WOverlay::DrawBox(g_view, WRect(pt, 6.0f, 4.0f), 0, pChannel->maxUsers > pChannel->curUsers ? 0xfffeaf24 : 0xffff0000, 0);
+				WRect rc(x + i * 6 + 1.0f, y + 1.0f, 6.0f, 4.0f);
+				WOverlay::DrawBox(g_view, WRect(rc), 0, pChannel->maxUsers > pChannel->curUsers ? 0xfffeaf24 : 0xffff0000, 0);
 			}
 
 

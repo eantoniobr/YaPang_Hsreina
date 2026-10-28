@@ -1365,12 +1365,12 @@ void CShopMain::DrawStatus(FrGraphicInterface *graphic, FrListItem *listItem, sh
 		if (slotCount != 0 || statusCount != 0) {
 			float posX = 86.0f;
 			for (int j = 0; j < statusCount; j++) {
-				graphic->DrawTexture(dots[0], WRect(posX + x + listItem->pos.x, posY + listItem->pos.y + x, 5.0f, 6.0f), 0xFFFFFFFF, 0);
+				graphic->DrawTexture(dots[0], WRect(x + posX + listItem->pos.x, x + (posY + listItem->pos.y), 5.0f, 6.0f), 0xFFFFFFFF, 0);
 				posX -= 6.0f;
 			}
 
 			for (int j = 0; j < slotCount; j++) {
-				graphic->DrawTexture(dots[1], WRect(posX + x + listItem->pos.x, posY + listItem->pos.y + x, 5.0f, 6.0f), 0xFFFFFFFF, 0);
+				graphic->DrawTexture(dots[1], WRect(x + posX + listItem->pos.x, x + (posY + listItem->pos.y), 5.0f, 6.0f), 0xFFFFFFFF, 0);
 				posX -= 6.0f;
 			}
 
@@ -1650,7 +1650,8 @@ void CShopMain::OnItemListOwnerDraw(PG_MSGARG param) {
 
 	if (canBuy) {
 		if (!m_miniBtns[1].enable) {
-			graphic->DrawTexture(m_miniBtns[1].normal, WRect(m_miniBtns[1].rect + listItem->pos), 0x88FFFFFF, 0);
+			WRect rc = m_miniBtns[1].rect + listItem->pos;
+			graphic->DrawTexture(m_miniBtns[1].normal, WRect(rc.x, rc.y, rc.w, rc.h), 0x88FFFFFF, 0);
 		} else if (listItem->underCursor && (m_miniBtns[1].rect + listItem->pos).IsInRect(mousePos)) {
 			graphic->DrawTexture(m_miniBtns[1].over, m_miniBtns[1].rect + listItem->pos + WPoint(0.0f, 0.0f), 0xFFFFFFFF, 0);
 			CIconToolTip::GetInstance()->SetToolTip((eBarButton)0x16);
@@ -2289,8 +2290,7 @@ void CShopMain::OnAuxPartCartListOwnerDraw(PG_MSGARG param) {
 	float cancelW = (float)m_cancelBtnNormal->Width();
 	float cancelH = (float)m_cancelBtnNormal->Height();
 
-	float rowY = (float)index * rowH;
-	float y = rowY + 129.0f;
+	float y = (float)index * rowH + 129.0f;
 	graphic->DrawTexture(rowBg, WRect(250.0f, y, (float)rowBg->Width(), rowH), 0xFFFFFFFF, 0);
 	graphic->DrawTexture(m_sicons[4], WRect(254.0f, y + 5.0f, (float)siconW, (float)siconH), 0xFFFFFFFF, 0);
 
@@ -2302,7 +2302,7 @@ void CShopMain::OnAuxPartCartListOwnerDraw(PG_MSGARG param) {
 	if (hasStatus)
 		DrawStatus3(graphic, 258.0f, y + 41.0f, status, slotStatus);
 
-	WRect cancelRect(354.0f, rowY + 141.0f, cancelW, cancelH);
+	WRect cancelRect(354.0f, (float)index * rowH + 141.0f, cancelW, cancelH);
 	if (cancelRect.IsInRect(g_pFresh->GetManager()->GetMousePos())) {
 		graphic->DrawTexture(m_cancelBtnOver, cancelRect, 0xFFFFFFFF, 0);
 		if (g_input->GetButton(LEFT_BUTTON) == 2) {

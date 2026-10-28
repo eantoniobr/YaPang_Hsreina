@@ -769,7 +769,8 @@ void CFragment::MakeParticle(void) {
 
 	if (!(WAbsBySign(m_vNormal.y - 1.0f) < g_EPSILON)) {
 		matAxis.ya = m_vNormal;
-		matAxis.xa = WCrossProduct(matAxis.ya, WVector::UNIT_POS_Y);
+		WMatrix &axis = matAxis;
+		matAxis.xa = WCrossProduct(axis.ya, WVector::UNIT_POS_Y);
 		matAxis.xa.Normalize();
 		matAxis.za = WCrossProduct(matAxis.xa, matAxis.ya);
 		matAxis.za.Normalize();
@@ -780,8 +781,7 @@ void CFragment::MakeParticle(void) {
 
 		m_pFrags[i].m_vPos = m_vCenter;
 
-		float fAngle = (float)(rand() % 1023) * 0.0009765625f;
-		m_pFrags[i].m_vVelocity = WVector::UNIT_POS_Z * fAngle * RotMat((float)(rand() % 1023) * 0.0061359233f, 1);
+		m_pFrags[i].m_vVelocity = (float)(rand() % 1023) * 0.0009765625f * WVector::UNIT_POS_Z * RotMat((float)(rand() % 1023) * 0.0061359233f, 1);
 		m_pFrags[i].m_vVelocity.y = (1.0f - fRatio) * 2.0f + fRatio * 5.0f;
 
 		WVector v = m_pFrags[i].m_vVelocity * Max(2.0f, GolfBall().m_velocity.Magnitude() * 0.1f);
@@ -856,7 +856,8 @@ void CDroplet::Display(void) {
 void CDroplet::MakeParticle(void) {
 	for (int i = 0; i < m_nDroplets; i++) {
 		m_pDroplets[i].m_vPos = GolfBall().m_pos;
-		m_pDroplets[i].m_vVelocity = ((float)(rand() % 1023) * 0.005859375f) * WVector::UNIT_POS_Z * RotMat((float)(rand() % 1023) * 0.0061359233f, 1);
+		float speed = (float)(rand() % 1023) * 0.005859375f;
+		m_pDroplets[i].m_vVelocity = speed * WVector::UNIT_POS_Z * RotMat((float)(rand() % 1023) * 0.0061359233f, 1);
 		float t = (float)(rand() % 1023) * 0.0009765625f;
 		m_pDroplets[i].m_vVelocity.y = (1.0f - t) * 10.0f + t * 40.0f;
 	}

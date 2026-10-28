@@ -3877,8 +3877,7 @@ void FrTradeEditDlg::DrawPang(void) {
 	if (!m_pNumberFont)
 		return;
 
-	char buf[32] = "";
-	WRect rect = GetRect();
+	char buf[32] = ""; WRect rect = GetRect();
 	static int s_fontWidth = m_pNumberFont->GetFontInfo()->fontw;
 	static float s_textWidth;
 

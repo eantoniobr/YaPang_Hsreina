@@ -36,7 +36,7 @@ CBase::CBase(void) : m_pCurBall(0), m_hConditionLine(0), m_hConditionFont(0) {
 	m_angle = 0;
 
 	m_uiMatrix.Reset();
-	m_uiMatrix.pivot = WVector(0.0f, 0.0f, -1.8f) * (g_view->GetWidth() * 0.0015625f);
+	float scale = g_view->GetWidth() * 0.0015625f; m_uiMatrix.pivot = WVector(0.0f, 0.0f, -1.8f) * scale;
 
 	m_light.type = LightSet::W_LIGHT_DIRECTIONAL;
 

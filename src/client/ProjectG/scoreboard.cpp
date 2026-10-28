@@ -65,7 +65,7 @@ extern const int data_9f1f48[][19][11];
 
 // The title font's texture names (no symbol, contents not transcribed).
 extern "C" char* data_a82930[];
-extern const char data_9f19c4[][20];
+extern "C" const char data_9f19c4[][20];
 
 // shareddoc.h:1143
 int CSharedDoc::GetUserInfoMod(void) {
@@ -4080,6 +4080,7 @@ void FrScoreForm::OnGolferListOwnerDraw(intptr_t param) {
 
 	unsigned char index = (unsigned char)(intptr_t)pItem->pData;
 	int row;
+	WPoint pt;
 	for (row = 0; row < m_rowCount; row++) {
 		if ((intptr_t)m_rowData[row] == index)
 			break;
@@ -4110,7 +4111,7 @@ void FrScoreForm::OnGolferListOwnerDraw(intptr_t param) {
 		pGDI->SetTextColor(0xFF000000, 0xFFFFFFFF);
 		pGDI->SetTextStyle(0);
 
-		WPoint pt(pItem->pos.x, pItem->pos.y + 28.0f);
+		pt.x = pItem->pos.x; pt.y = pItem->pos.y + 28.0f;
 
 		for (unsigned char i = 0; i < GOLFDOC()->GetPlayerNum(); i++) {
 			float x = pt.x;
@@ -4170,7 +4171,7 @@ void FrScoreForm::OnGolferListOwnerDraw(intptr_t param) {
 	}
 
 names:
-	WPoint pt(pItem->pos.x, pItem->pos.y + 36.0f);
+	pt.x = pItem->pos.x; pt.y = pItem->pos.y + 36.0f;
 
 	if (WSingleton<CSharedDoc>::Instance()->m_roomType == 6) {
 		// guild match: the team's trophy holder
@@ -4361,8 +4362,8 @@ void FrScoreForm::OnTotalListOwnerDraw(PG_MSGARG param) {
 	float width = m_pScoreList[2]->GetItemWidth();
 	float height = m_pScoreList[2]->GetItemHeight();
 
-	int index = (int)pItem->pData;
 	FrGraphicInterface* pGDI = g_pFresh->GetManager()->GetGDI();
+	int index = (int)pItem->pData;
 
 	if (GetGameType() == 1) {
 		// the row of this client's team

@@ -1330,7 +1330,9 @@ void FrGhostAward::OnDrawScore(PG_MSGARG param) {
 	if (pGDI) {
 
 		const WRect& rect = GetRect();
-		WPoint pos = rect.TopLeft() + WPoint(2.0f, 49.0f);
+		// One line in the original (a single line mark); the copy is a whole
+		// WRect, which keeps its slot apart from the later temporaries.
+		WRect pos = rect; pos.x += 2.0f; pos.y += 49.0f;
 
 		pGDI->SetTextStyle(1);
 

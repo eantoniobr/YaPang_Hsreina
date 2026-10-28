@@ -7323,11 +7323,17 @@ void CGolfRule::DoFlyBall_Stopped(float elapsed) {
 			if (m_flag3F0)
 				SendMsg(this, "Player", 0x2716, (intptr_t)"\xC6\xDB\xC6\xC3\xBC\xBA\xB0\xF8", 0, 0, 0);
 
+			CSharedDoc *doc;
 			if (IsLocalContent((localContentType_t)0x55)) {
-				unsigned long ballId = CSharedDoc::Instance()->m_myBallId;
+				doc = CSharedDoc::Instance();
+				unsigned long ballId = doc->m_myBallId;
 
-				if (ballId)
+				if (ballId) {
 					CAztecHoleinEffect::Instance()->PlayEffect(ballId);
+					doc = CSharedDoc::Instance();
+				}
+			} else {
+				doc = CSharedDoc::Instance();
 			}
 
 			if (m_replayFlags & 1) {
@@ -7354,12 +7360,15 @@ void CGolfRule::DoFlyBall_Stopped(float elapsed) {
 					break;
 				}
 			} else {
-				if (IsMassGame() && GOLFDOC()->m_currentHole == GetEndHole()
-					&& !m_goStopSent) {
-					m_goStopSent = true;
-					WSendPacket packet((enumClientPacket)0x1C);
-					EncodePacket((enumClientPacket)0x1C, packet);
-					packet.Send(SEND_TO_DEFAULT);
+				if (IsMassGame()) {
+					CGolfDoc *golfDoc = doc->m_pGolfDoc;
+					unsigned char endHole = doc->m_holeOrder[doc->m_holes - 1];
+					if (golfDoc->m_currentHole == endHole && !m_goStopSent) {
+						m_goStopSent = true;
+						WSendPacket packet((enumClientPacket)0x1C);
+						EncodePacket((enumClientPacket)0x1C, packet);
+						packet.Send(SEND_TO_DEFAULT);
+					}
 				}
 
 				SendMsg(this, "Effect", 0x179, 0, 0, 0, 0);

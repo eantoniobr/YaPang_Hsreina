@@ -775,45 +775,44 @@ eGMToolResult CGMToolkit::CommandClose(eGMToolkitStatus status) {
 // gmtoolkit.cpp:1022
 eGMToolResult CGMToolkit::CommandKickUser(eGMToolkitStatus status) {
 	eGMToolResult result = GM_RESULT_SUCCEEDED;
-	if (m_argumentCount <= 1) {
-		return GM_RESULT_BAD_ARGUMENT;
-	}
-
-	sBriefUserInfo info;
-	std::map<unsigned long, sBriefUserInfo>::iterator it;
-	for (it = WSingleton<CSharedDoc>::Instance()->m_userMap.begin(); it != WSingleton<CSharedDoc>::Instance()->m_userMap.end(); ++it) {
-		info = it->second;
-		if (strcmp(info.nick, m_arguments[1]) == 0) {
-			break;
+	if (m_argumentCount > 1) {
+		sBriefUserInfo info;
+		std::map<unsigned long, sBriefUserInfo>::iterator it;
+		for (it = WSingleton<CSharedDoc>::Instance()->m_userMap.begin(); it != WSingleton<CSharedDoc>::Instance()->m_userMap.end(); ++it) {
+			info = it->second;
+			if (strcmp(info.nick, m_arguments[1]) == 0) {
+				break;
+			}
 		}
-	}
 
-	info = it->second;
-	if (it != WSingleton<CSharedDoc>::Instance()->m_userMap.end()) {
-		if (info.identityBits.administrator) {
-			// "Administrators cannot be kicked."
-			Display("\xbf\xee\xbf\xb5\xc0\xda\xb4\xc2 \xb0\xad\xc1\xa6\xc5\xf0\xc0\xe5 \xbd\xc3\xc5\xb3 \xbc\xf6 \xbe\xf8\xbd\xc0\xb4\xcf\xb4\xd9.", 0xFF7802);
-		} else {
-			WSendPacket packet(GCT_GM_COMMAND);
-			packet.Encode2(GM_COMMAND_KICK_USER);
-			packet.Encode4(info.uid);
-			if (m_argumentCount > 2) {
-				if (strcmp(m_arguments[2], "-p") == 0) {
-					packet.Encode1(1);
-				} else {
-					result = GM_RESULT_BAD_ARGUMENT;
-				}
+		info = it->second;
+		if (it != WSingleton<CSharedDoc>::Instance()->m_userMap.end()) {
+			if (info.identityBits.administrator) {
+				// "Administrators cannot be kicked."
+				Display("\xbf\xee\xbf\xb5\xc0\xda\xb4\xc2 \xb0\xad\xc1\xa6\xc5\xf0\xc0\xe5 \xbd\xc3\xc5\xb3 \xbc\xf6 \xbe\xf8\xbd\xc0\xb4\xcf\xb4\xd9.", 0xFF7802);
 			} else {
-				packet.Encode1(0);
+				WSendPacket packet(GCT_GM_COMMAND);
+				packet.Encode2(GM_COMMAND_KICK_USER);
+				packet.Encode4(info.uid);
+				if (m_argumentCount > 2) {
+					if (strcmp(m_arguments[2], "-p") == 0) {
+						packet.Encode1(1);
+					} else {
+						result = GM_RESULT_BAD_ARGUMENT;
+					}
+				} else {
+					packet.Encode1(0);
+				}
+				if (result == GM_RESULT_SUCCEEDED) {
+					packet.Send(SEND_TO_DEFAULT);
+				}
 			}
-			if (result == GM_RESULT_SUCCEEDED) {
-				packet.Send(SEND_TO_DEFAULT);
-			}
-			return result;
+		} else {
+			// "This user is not connected to the server or does not exist."
+			Display("\xc7\xf6\xc0\xe7 \xbc\xad\xb9\xf6\xbf\xa1 \xc1\xa2\xbc\xd3\xc7\xcf\xb0\xed \xc0\xd6\xc1\xf6 \xbe\xca\xb0\xc5\xb3\xaa \xbe\xf8\xb4\xc2 \xc0\xaf\xc0\xfa\xc0\xd4\xb4\xcf\xb4\xd9.", 0xFF7802);
 		}
 	} else {
-		// "This user is not connected to the server or does not exist."
-		Display("\xc7\xf6\xc0\xe7 \xbc\xad\xb9\xf6\xbf\xa1 \xc1\xa2\xbc\xd3\xc7\xcf\xb0\xed \xc0\xd6\xc1\xf6 \xbe\xca\xb0\xc5\xb3\xaa \xbe\xf8\xb4\xc2 \xc0\xaf\xc0\xfa\xc0\xd4\xb4\xcf\xb4\xd9.", 0xFF7802);
+		result = GM_RESULT_BAD_ARGUMENT;
 	}
 
 	return result;
@@ -1369,22 +1368,22 @@ eGMToolResult CGMToolkit::CommandSetPrize(eGMToolkitStatus status) {
 								strcpy(awardName, name);
 								break;
 
-							case 3:
+							case 5:
 								name = "\xba\xa3\xbd\xba\xc6\xae \xb8\xae\xc4\xbf\xb9\xf6\xb8\xae";
 								strcpy(awardName, name);
 								break;
 
-							case 4:
+							case 6:
 								name = "\xc7\xe0\xbf\xee\xbb\xf3";
 								strcpy(awardName, name);
 								break;
 
-							case 5:
+							case 4:
 								name = "\xba\xa3\xbd\xba\xc6\xae \xb7\xd5\xc6\xdb\xc5\xcd";
 								strcpy(awardName, name);
 								break;
 
-							case 6:
+							case 3:
 								name = "\xba\xa3\xbd\xba\xc6\xae \xc4\xa8\xc0\xce";
 								strcpy(awardName, name);
 								break;
