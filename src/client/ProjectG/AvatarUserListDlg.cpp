@@ -100,7 +100,7 @@ void FrAvatarUserListDlg::OnUserListOwnerDraw(PG_MSGARG param) {
 
 			WRect rect(pItem->pos.x, pItem->pos.y, pSex->Width(), pSex->Height());
 
-			if (pSlot->m_uid == (unsigned long)m_selected) {
+			if (((sSlotInfo*)pItem->pData)->m_uid == (unsigned long)m_selected) {
 				pGDI->Box(WRect(rect.x, rect.y, (float)m_pUserList->GetItemWidth(), (float)m_pUserList->GetItemHeight()), (unsigned long)(unsigned char)(m_alpha * 255.0f) << 24 | 0x9B9BFF, 0, 0.0f);
 			}
 

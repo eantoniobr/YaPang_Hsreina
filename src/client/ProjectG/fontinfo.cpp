@@ -5803,10 +5803,11 @@ void CExtraHoleInfo::Display(void) {
 					Print(g_view->GetWidth() - 85.0f, i * 23.0f + 213.0f, "-", 3.0f, 0, 1.0f, NULL);
 					Print(g_view->GetWidth() - 25.0f, i * 23.0f + 213.0f, "-", 3.0f, 0, 1.0f, NULL);
 				} else {
+					WView *view = g_view;
 					if (m_cupDistance[i] > 0) {
-						Print(g_view->GetWidth() - 65.0f, i * 23.0f + 213.0f, MakeStr("%d.%dy", m_cupDistance[i] / 100, m_cupDistance[i] % 100), 0.0f, 0, 1.0f, NULL);
+						Print(view->GetWidth() - 65.0f, i * 23.0f + 213.0f, MakeStr("%d.%dy", m_cupDistance[i] / 100, m_cupDistance[i] % 100), 0.0f, 0, 1.0f, NULL);
 					} else {
-						Print(g_view->GetWidth() - 85.0f, i * 23.0f + 213.0f, "-", 3.0f, 0, 1.0f, NULL);
+						Print(view->GetWidth() - 85.0f, i * 23.0f + 213.0f, "-", 3.0f, 0, 1.0f, NULL);
 					}
 
 					if (m_shotTime[i] > 0) {

@@ -2844,8 +2844,7 @@ CLobbyMain::CLobbyMain(void) {
 
 // lobbymain.cpp:2087
 CLobbyMain::~CLobbyMain(void) {
-	std::map<unsigned long, sRoomSlot>::iterator it;
-	for (it = CSharedDoc::Instance()->m_roomSlotMap.begin(); it != CSharedDoc::Instance()->m_roomSlotMap.end(); ++it) {
+	for (std::map<unsigned long, sRoomSlot>::iterator it = CSharedDoc::Instance()->m_roomSlotMap.begin(); it != CSharedDoc::Instance()->m_roomSlotMap.end(); ++it) {
 		if (it->second.m_pPet) { delete it->second.m_pPet; it->second.m_pPet = NULL; }
 	}
 
@@ -3954,11 +3953,14 @@ void CLobbyMain::HandleMsg(const MsgObject& msg) {
 				int extra = size - 6;
 				FrListBox::ITEM_LIST::iterator it = m_roomListBox->m_itemList.begin();
 				while (it != m_roomListBox->m_itemList.end() && extra > 0) {
-					FrListBox::ITEM_LIST::iterator cur = it++;
-					if ((*cur)->pData == NULL) {
-						m_roomListBox->_DelItem(cur);
+					if ((*it)->pData == NULL) {
 						extra--;
+						it = m_roomListBox->_DelItem(it);
+					} else {
+						++it;
 					}
+					if (extra < 0)
+						break;
 				}
 			}
 			RoomList_SortRoomList(m_roomSort, 0);
@@ -4034,10 +4036,11 @@ void CLobbyMain::HandleMsg(const MsgObject& msg) {
 	case 0x08: {
 		// lobbymain.cpp:3396, a player left the game room
 		unsigned long uid = msg.m_param2;
+		int team = msg.m_param3;
 		if (CSharedDoc::Instance()->m_roomInfo.m_gameType == 5 || CSharedDoc::Instance()->m_roomInfo.m_gameType == 6) {
 			if (IsGameOver()) {
 				std::list<sSlotInfo*>::iterator it;
-				if (msg.m_param3 == 0) {
+				if (team == 0) {
 					for (it = m_slotList1.begin(); it != m_slotList1.end(); ++it) {
 						if ((*it)->m_uid == uid) {
 							m_slotList1.erase(it);
@@ -9641,8 +9644,11 @@ void CLobbyMain::OnRoomList_RoomListOwnerDraw(PG_MSGARG param) {
 
 				if (WSingleton<CSharedDoc>::Instance()->GetMapEventPangRate(pCourse->m_typeId & 0x3FFFFFF) > 100) {
 					const Bitmap* pMark = g_pFresh->GetBitmap("lobby_mapevent_mark");
-					if (pMark)
-						pGDI->DrawTexture(pMark, WRect(x + (pCourseBmp->Width() - pMark->Width()), pItem->pos.y, (float)pMark->Width(), (float)pMark->Height()), 0xFFFFFFFF, 0);
+					if (pMark) {
+						unsigned int markW = pMark->Width();
+						unsigned int markH = pMark->Height();
+						pGDI->DrawTexture(pMark, WRect(x + (pCourseBmp->Width() - markW), pItem->pos.y, (float)markW, (float)markH), 0xFFFFFFFF, 0);
+					}
 				}
 			}
 		}

@@ -2571,6 +2571,8 @@ void COfflineShopVisitorDlg::OnTradeItemListLClick(void) {
 
 	const WPoint& mousePos = g_pFresh->GetManager()->GetMousePos();
 	sStallSlot* pSlot = (sStallSlot*)pItem->pData;
+	// Unused: the original's x87 operand order (item pos loaded first) needs this reference.
+	const WPoint& itemPos = pItem->pos;
 
 	FILETIME slotTime;
 	FILETIME serverTime;

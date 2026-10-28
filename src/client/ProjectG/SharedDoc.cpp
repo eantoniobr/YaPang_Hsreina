@@ -988,27 +988,33 @@ float CSharedDoc::GetWtPepPangyaComboGauge(unsigned char team) {
 // shareddoc.cpp:1167, whether the player of a team (every player of the team
 // in a team room) wears the part.
 bool CSharedDoc::FindEquipPart(unsigned char team, unsigned long typeId) {
+	bool found = false;
+
 	if (WSingleton<CSharedDoc>::Instance()->m_roomType == 1) {
 		for (int i = 0; i < WSingleton<CSharedDoc>::Instance()->m_pGolfDoc->GetPlayerNum(); i++) {
 			if (WSingleton<CSharedDoc>::Instance()->m_pGolfDoc->GetPlayer(i)->m_attribute == team) {
 				for (int j = 0; j < 24; j++) {
 					if (typeId == WSingleton<CSharedDoc>::Instance()->m_roomPlayers[i].m_characterInfo.partTypeIds[j]) {
-						return true;
+						found = true;
+						break;
 					}
 				}
 			}
-		}
 
-		return false;
+			if (found) {
+				break;
+			}
+		}
+	} else {
+		for (int j = 0; j < 24; j++) {
+			if (typeId == WSingleton<CSharedDoc>::Instance()->m_roomPlayers[team].m_characterInfo.partTypeIds[j]) {
+				found = true;
+				break;
+			}
+		}
 	}
 
-	for (int j = 0; j < 24; j++) {
-		if (typeId == WSingleton<CSharedDoc>::Instance()->m_roomPlayers[team].m_characterInfo.partTypeIds[j]) {
-			return true;
-		}
-	}
-
-	return false;
+	return found;
 }
 
 // shareddoc.cpp:1212, the combo gauge's limit for a team: 99, 33 more when one

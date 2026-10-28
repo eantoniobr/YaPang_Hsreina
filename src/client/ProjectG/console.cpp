@@ -317,14 +317,15 @@ void CConsole::InputProcess(float elapsed) {
 		} else {
 			char *end = strchr(word, 0);
 			if (isalnum(end[-1])) {
-				while ((*end = PopFromBsStack()) != 0) {
-					end++;
+				char *dst = end;
+				while ((*dst = PopFromBsStack()) != 0) {
+					dst++;
 				}
 			} else {
 				char c;
-				char *dst = end;
 				while ((c = PopFromBsStack()) != 0) {
 					if (isalnum(c)) {
+						char *dst = end;
 						*dst = c;
 						while ((*++dst = PopFromBsStack()) != 0) {
 						}
