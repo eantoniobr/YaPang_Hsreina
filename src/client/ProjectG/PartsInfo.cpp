@@ -19,6 +19,14 @@
 #include <string.h>
 #include <string>
 
+#ifdef JP_PAKS
+// The JP CPetFrame's add-on pets (AddonPart.iff, src/jp/JpAddonPart.cpp, not
+// on this unit's include path in the port): 0x8b1bc0, 0x8b0e50, 0x8af2d0.
+void Jp_PetFrame_SetAddonPets(const CPetFrame* frame, WPuppet* bonePet, int slot, unsigned int tid);
+void Jp_PetFrame_ReleaseAddonPets(const CPetFrame* frame, WPuppet* bonePet);
+bool Jp_PetFrame_HasAddonPet(const CPetFrame* frame, const char* name);
+#endif
+
 // partsinfo.h:41
 unsigned char CPartList::GetNumTotalParts(void) const {
 	return m_numTotalParts;
@@ -390,6 +398,12 @@ CPetFrame::~CPetFrame(void) {
 
 // partsinfo.cpp:533
 void CPetFrame::ReleasePets(int mask) {
+#ifdef JP_PAKS
+	// JP 0x8b0e50: the add-ons go with the part pets.
+	if (mask & 4) {
+		Jp_PetFrame_ReleaseAddonPets(this, m_pBonePet);
+	}
+#endif
 	if ((mask & 1) && g_resrcmng != 0 && m_pBonePet != 0) {
 		g_resrcmng->Release(m_pBonePet, false);
 		m_pBonePet = 0;
@@ -523,6 +537,12 @@ void CPetFrame::SetPartPets(unsigned long mask) {
 	}
 
 	IFF_STRUCT::sChar *pChar = ItemManager()->FindChar(m_tidChar);
+#ifdef JP_PAKS
+	// JP 0x8b1d3d: the character's add-ons on a full rebuild.
+	if (mask == 0xFFFFFFFF) {
+		Jp_PetFrame_SetAddonPets(this, m_pBonePet, -1, m_tidChar);
+	}
+#endif
 	if (pChar->m_baseTexture[0] != 0) {
 		hBaseTex = g_resrcmng->LoadTexture(pChar->m_baseTexture, 0, 0, 0);
 	}
@@ -663,6 +683,10 @@ void CPetFrame::SetPartPets(unsigned long mask) {
 			}
 			m_petTex[slot][j] = texA[j];
 		}
+#ifdef JP_PAKS
+		// JP 0x8b1f10: the slot's part add-ons.
+		Jp_PetFrame_SetAddonPets(this, m_pBonePet, slot, pIff != 0 ? m_partList.GetPart(slot)->m_tid : 0);
+#endif
 	}
 
 	int hairSlot = -1;
@@ -886,7 +910,12 @@ bool CPetFrame::HasMPet(char *name) {
 			return true;
 		}
 	}
+#ifdef JP_PAKS
+	// JP 0x8af620: then the add-ons (0x8af2d0).
+	return Jp_PetFrame_HasAddonPet(this, name);
+#else
 	return false;
+#endif
 }
 
 // partsinfo.cpp:1219
