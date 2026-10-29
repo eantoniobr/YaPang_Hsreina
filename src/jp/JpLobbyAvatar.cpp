@@ -185,7 +185,7 @@ void IDummyPlayer::ApplyFrameKind(const char*& script, int kind) {
 
 // 0x4d5fa0
 void IDummyPlayer::RefreshAfterPartChange(int keepEffects, int attachFrame, int param3, bool flag) {
-	(void)param3;
+	(void)flag;
 	if (keepEffects == 0) {
 		m_effectHost->StopEffect(m_effectId);
 	} else {
@@ -195,12 +195,14 @@ void IDummyPlayer::RefreshAfterPartChange(int keepEffects, int attachFrame, int 
 		float range[2];
 		range[0] = 3.402823466e+38f;
 		range[1] = 3.402823466e+38f;
-		m_effectId = m_effectHost->AttachRange(m_petFrame.get(), range, 1, 0);
+		m_effectId = m_effectHost->AttachRange(m_petFrame.get(), range, true, 0);
 	} else {
-		m_effectId = m_effectHost->AttachFrame(m_petFrame.get(), NULL, NULL, flag, 0);
+		m_effectId = m_effectHost->AttachFrame(m_petFrame.get(), NULL, 0, param3 != 0, false);
 	}
-	m_effectHost->BindOwner(this, "\xb4", NULL);
-	m_effectHost->BindOwner(this, "\xbf", NULL);
+	// The "*playif" conditions 대천사 (archangel) and 요정날개 (fairy wings),
+	// CP949 (JP 0xd04b7c, 0xd04b70).
+	m_effectHost->BindOwner("\xb4\xeb\xc3\xb5\xbb\xe7", true, 0);
+	m_effectHost->BindOwner("\xbf\xe4\xc1\xa4\xb3\xaf\xb0\xb3", true, 0);
 }
 
 // 0x4d6040
