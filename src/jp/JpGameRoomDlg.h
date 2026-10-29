@@ -39,6 +39,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "defines.h"
 #include "padding.h"
@@ -69,9 +70,13 @@ class FrUniteResultDlg;
 class WTitleFont;
 struct sSlotInfo;
 
-// JP-only, 0x54 bytes, built by the constructor from the room's course
-// (JP CSharedDoc +0x10950): constructor 0x53f0d0, destructor 0x53f010.
-// Not decompiled (name ours).
+// JP-only, 0x54 bytes, built by FrGameRoomDlg's constructor from the room's
+// course (JP CSharedDoc +0x10950) (name ours): the room's ambient sound.
+// It remembers the playing BGM; on the course 0x40 (0x80 folded off except
+// 0xfd) it stops the BGM and plays one of six "oneshot_hio1_N" sounds at
+// random every 5-9 seconds (Update, per frame from OnProc). The destructor
+// restarts the remembered BGM.
+// Offsets are the JP x86 (VS2010) layout; the port's std:: members differ.
 class JpGameRoomData {
 public:
 	explicit JpGameRoomData(unsigned char course);                    // 0x53f0d0
@@ -79,7 +84,17 @@ public:
 	// Per frame, from FrGameRoomDlg::OnProc (by reference).
 	void Update(const float& dt);                                     // 0x53ef40
 private:
-	UNKNOWN(0x0, 0x54);
+	// The one-shot sounds Update picks from (0x483e60 pushes them).
+	std::vector<std::string> m_oneShots; // 0x0
+	// Cleared by the constructor and the destructor only.
+	std::string m_unused10;              // 0x10
+	// The BGM playing when the room opened (CSoundManager::m_bgmName).
+	std::string m_prevBgm;               // 0x2c
+	float m_oneShotTimer;                // 0x48
+	float m_nextOneShot;                 // 0x4c (seconds until the next one-shot)
+	unsigned char m_course;              // 0x50 (0x80 folded off except 0xfd)
+	bool m_oneShotsOn;                   // 0x51 (set by the constructor)
+	bool m_restoreBgm;                   // 0x52 (set by the constructor)
 };
 
 // JP-only WTitleFontEx (0xc bytes, vtable 0xd1c10c; base constructor
@@ -306,7 +321,7 @@ protected:
 	void SetRoomControls(bool master);                                // 0x50c0b0
 	// SetRoomControls' last steps with 2 (the KR BTN_DIR_NONE): the KR
 	// CLobbyMain::SetRoomCharControl / SetRoomCaddieControl by their place
-	// and shape (0 / 1 step the own character / caddie; declared only).
+	// and shape (0 / 1 step the own character / caddie, 2 refreshes).
 	void SetRoomCharControl(int dir);                                 // 0x508f60
 	// The JP CLobbyMain::SetStartBtn (KR lobbymain.cpp:7865, same shape):
 	// with check, recomputes m_allReady and starts or stops the blink.
@@ -544,7 +559,12 @@ protected:
 	UNKNOWN(0x240, 0x248);
 	// "group_result.rankframe" (mass room): RTTI 0xf1aba4, class not identified yet.
 	FrWnd* m_pResultRankFrame;           // 0x248
-	UNKNOWN(0x24c, 0x25c);
+	// SetRoomCharControl: in gallery mode the gallery player's character
+	// button (SetVisible, SetButtonImg with the character's icon), the KR
+	// CLobbyMain::m_charControlWnd. Zeroed by the constructor, the handler
+	// that stores it is not identified.
+	FrWnd* m_pCharControlWnd;            // 0x24c
+	UNKNOWN(0x250, 0x25c);
 	FrArea* m_p30sTeam1;                 // 0x25c "group_30s.30_team1" (mass room)
 	FrArea* m_p30sTeam2;                 // 0x260 "group_30s.30_team2"
 	FrArea* m_p30sGuild1;                // 0x264 "group_30s.30_guild1"

@@ -4,6 +4,7 @@
 // the port are declared only.
 #include "JpGameRoomDlg.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "IContentsDoc.h"
@@ -1621,6 +1622,52 @@ void FrGameRoomDlg::OnCurAztecOwnerDraw(PG_MSGARG) {
 	}
 }
 
+// 0x507380
+// The team controls after a room change: the team game (JP CSharedDoc
+// +0x1094c, game type 1) shows the change button (Enable), the red team bar
+// and the second team bar; game type 6 shows the two guild bars. Outside
+// gallery mode the own player (uid +0x81a, MyGuid) must be in the room list
+// (+0x109fc, the KR m_roomPlayerList); its team (record +0x53 & 3, the KR
+// m_attribute) picks the change button's image: team 0 shows "blue", any
+// other "red".
+void FrGameRoomDlg::UpdateTeamControls(void) {
+	std::list<sSlotInfo>& players = WSingleton<CSharedDoc>::Instance()->m_roomPlayerList;
+	std::list<sSlotInfo>::iterator own = players.end();
+	int gameType = JpSharedDoc_GetRoomGameType();
+	bool teamGame = gameType == 1;
+	bool guildGame = gameType == 6;
+	if (GalleryMode()) {
+		teamGame = false;
+	} else {
+		for (own = players.begin(); own != players.end(); ++own) {
+			if (own->m_uid == MyGuid(false)) {
+				break;
+			}
+		}
+		if (own == players.end()) {
+			return;
+		}
+	}
+	if (m_pChangeTeam) {
+		m_pChangeTeam->Enable(teamGame);
+	}
+	if (m_p30sGuild1) {
+		m_p30sGuild1->SetVisible(guildGame);
+	}
+	if (m_p30sGuild2) {
+		m_p30sGuild2->SetVisible(guildGame);
+	}
+	if (m_p30sTeam1) {
+		m_p30sTeam1->SetBgImg(teamGame ? "bar_redteam" : "bar_base");
+	}
+	if (m_p30sTeam2) {
+		m_p30sTeam2->SetVisible(teamGame);
+	}
+	if (teamGame && m_pChangeTeam) {
+		m_pChangeTeam->SetButtonImg((own->m_attribute & 3) ? "btn_teamchange_red_n" : "btn_teamchange_blue_n", FrButton::NORMAL);
+	}
+}
+
 // 0x5074b0
 // The JP CLobbyMain::SetStartBtn (KR, same shape: the JP CSharedDoc
 // +0x109fc the KR m_roomPlayerList, record +0x54 bit 1 the KR
@@ -1707,7 +1754,7 @@ void FrGameRoomDlg::SetStartBtn(bool check) {
 
 // 0x5083c0
 FrGameRoomDlg::FrGameRoomDlg(void) {
-	// The original also zeroes raw bytes the header keeps as UNKNOWN (0x1b4, 0x1fc, 0x240-0x244, 0x24c-0x258,
+	// The original also zeroes raw bytes the header keeps as UNKNOWN (0x1b4, 0x1fc, 0x240-0x244, 0x250-0x258,
 	// 0x270, 0x374, 0x378, 0x380-0x390, 0x3c0, word 0x3dc); the port reads
 	// none of them yet. It leaves m_roomState, m_pGroup30s,
 	// m_pGroupGP, m_pFrameBg, m_pTeamBitmap, m_p30sSituBitmap,
@@ -1770,6 +1817,7 @@ FrGameRoomDlg::FrGameRoomDlg(void) {
 	m_p30sTeamNum = NULL;
 	m_p30sGuildNum = NULL;
 	m_pResultRankFrame = NULL;
+	m_pCharControlWnd = NULL;
 	m_p30sTeam1 = NULL;
 	m_p30sTeam2 = NULL;
 	m_p30sGuild1 = NULL;
@@ -1971,6 +2019,58 @@ void FrGameRoomDlg::HidePet(uint32_t uid) {
 			it->second.m_pPet = NULL;
 		}
 	}
+}
+
+// 0x508f60
+// The JP CLobbyMain::SetRoomCharControl (KR lobbymain.cpp:8326, same
+// shape; JP CSharedDoc +0x816 the KR galleryGuid, +0x6802 the KR
+// m_roomPlayers[0] character type, +0x3704 the KR m_characterMap, +0xa2a
+// the KR m_myCharacterId). The JP returns on m_ready (+0x17d) where the
+// KR tests m_roomOptionA. Packet 0xc (4, id) asks for the previous (0) or
+// next (1) owned character; 2 only refreshes the gallery button.
+void FrGameRoomDlg::SetRoomCharControl(int dir) {
+	CSharedDoc* doc = WSingleton<CSharedDoc>::Instance();
+	if (GalleryMode()) {
+		if (doc->m_userInfo.galleryGuid == 0xffffffff) {
+			if (m_pCharControlWnd) {
+				m_pCharControlWnd->SetVisible(false);
+			}
+		} else if (m_pCharControlWnd) {
+			m_pCharControlWnd->SetVisible(true);
+			IFF_STRUCT::sChar* pChar = ItemManager()->FindChar(doc->m_roomPlayers[0].m_characterInfo.typeId);
+			if (pChar) {
+				static_cast<FrButton*>(m_pCharControlWnd)->SetButtonImg(pChar->m_icon, FrButton::NORMAL);
+			}
+		}
+	}
+	if (m_ready || GalleryMode()) {
+		return;
+	}
+	std::map<unsigned int, sCharacterInfo>& characterMap = doc->m_characterMap;
+	std::map<unsigned int, sCharacterInfo>::const_iterator it = characterMap.find(doc->m_myCharacterId);
+	if (it == characterMap.end()) {
+		return;
+	}
+	switch (dir) {
+	case 0:
+		if (it == characterMap.begin()) {
+			return;
+		}
+		--it;
+		break;
+	case 1:
+		++it;
+		break;
+	default:
+		return;
+	}
+	if (it == characterMap.end()) {
+		return;
+	}
+	WSendPacket packet(0xc);
+	packet.Encode1(4);
+	packet.Encode4(it->second.id);
+	packet.Send(SEND_TO_DEFAULT);
 }
 
 // 0x509440
@@ -2499,6 +2599,57 @@ void FrGameRoomDlg::SetLevelBar(void) {
 			values[i]->SetCaption11(MakeStr("%d/%d", value, capacity));
 		}
 	}
+}
+
+// 0x50b660
+// The JP CLobbyMain::SetRoomCaddieControl (KR lobbymain.cpp:8400 without
+// the gallery block and the caddie preview message 0x13; JP CSharedDoc
+// +0x3714 the KR m_caddieMap, +0xa26 the KR m_myCaddieId). 0 / 1 step the
+// own caddie to the previous / next owned one (previous from the first
+// one, or from none, takes the caddie off), refresh the level bars and
+// send packet 0xc (1, id); 2 only checks the equipped caddie is still
+// owned (else none).
+void FrGameRoomDlg::SetRoomCaddieControl(int dir) {
+	CSharedDoc* doc = WSingleton<CSharedDoc>::Instance();
+	std::map<unsigned int, sCaddieInfo>& caddieMap = doc->m_caddieMap;
+	if (caddieMap.size() == 0) {
+		doc->m_myCaddieId = 0;
+		return;
+	}
+	std::map<unsigned int, sCaddieInfo>::const_iterator it = caddieMap.find(doc->m_myCaddieId);
+	unsigned long id = 0;
+	switch (dir) {
+	case 0:
+		if (it != caddieMap.begin()) {
+			--it;
+			if (it != caddieMap.end()) {
+				id = it->second.id;
+			}
+		}
+		break;
+	case 1:
+		if (doc->m_myCaddieId == 0) {
+			it = caddieMap.begin();
+		} else if (it != caddieMap.end()) {
+			++it;
+		}
+		if (it == caddieMap.end()) {
+			return;
+		}
+		id = it->second.id;
+		break;
+	case 2:
+		doc->m_myCaddieId = it != caddieMap.end() ? it->second.id : 0;
+		return;
+	default:
+		return;
+	}
+	doc->m_myCaddieId = id;
+	SetLevelBar();
+	WSendPacket packet(0xc);
+	packet.Encode1(1);
+	packet.Encode4(id);
+	packet.Send(SEND_TO_DEFAULT);
 }
 
 // 0x50b850
@@ -3431,6 +3582,60 @@ void FrGameRoomDlg::MakeRoomUserList(void) {
 		JpRoomSlot_SetUid(slot, MyUID());
 		doc->m_roomSlotMap[MyGuid(false)] = slot;
 		AddPlayer(MyGuid(false));
+	}
+}
+
+// The protected CSoundManager::m_bgmName (+0x24, the playing BGM's name),
+// which JpGameRoomData's constructor copies; the KR header has no getter.
+struct JpSoundManagerBgmName : public CSoundManager {
+	static const char* Get(const CSoundManager* manager) {
+		return manager->*(&JpSoundManagerBgmName::m_bgmName);
+	}
+};
+
+// The six one-shot sounds of the course 0x40 (0xd09610-0xd095c0).
+static const char* const s_roomOneShots[6] = {
+	"oneshot_hio1_1", "oneshot_hio1_2", "oneshot_hio1_3",
+	"oneshot_hio1_4", "oneshot_hio1_5", "oneshot_hio1_6",
+};
+
+// 0x53ef40
+void JpGameRoomData::Update(const float& dt) {
+	if (!m_oneShotsOn || m_oneShots.empty()) {
+		return;
+	}
+	m_oneShotTimer += dt;
+	if (m_oneShotTimer > m_nextOneShot) {
+		m_oneShotTimer = 0.0f;
+		m_nextOneShot = (float)(rand() % 5 + 5);
+		int index = rand() % (int)m_oneShots.size();
+		if (g_audio) {
+			g_audio->PlaySfx(m_oneShots[index].c_str(), NULL, 0, NULL, NULL, 0.5f, 200.0f);
+		}
+	}
+}
+
+// 0x53f010
+JpGameRoomData::~JpGameRoomData(void) {
+	if (!m_prevBgm.empty() && m_restoreBgm && g_audio) {
+		g_audio->PlayBGM(m_prevBgm.c_str(), false, true);
+	}
+}
+
+// 0x53f0d0
+JpGameRoomData::JpGameRoomData(unsigned char course)
+	: m_oneShotTimer(0.0f), m_nextOneShot(0.0f), m_oneShotsOn(true), m_restoreBgm(true) {
+	if (g_audio) {
+		m_prevBgm = JpSoundManagerBgmName::Get(g_audio);
+	}
+	m_course = (course > 0x7f && course != 0xfd) ? (unsigned char)(course - 0x80) : course;
+	if (m_course == 0x40) {
+		if (g_audio) {
+			g_audio->StopBGM(true);
+		}
+		for (int i = 0; i < 6; i++) {
+			m_oneShots.push_back(s_roomOneShots[i]);
+		}
 	}
 }
 
